@@ -2,7 +2,7 @@ package proxy
 
 import (
 	"errors"
-	"gop/logger"
+	"evil-gopher/logger"
 	"io"
 	"net"
 	"strconv"

@@ -2,9 +2,9 @@ package session
 
 import (
 	"evil-gopher/proxy"
-	"evil-gopher/routing"
 	"evil-gopher/tunnel"
 	"fmt"
+	"net"
 	"sync/atomic"
 )
 
@@ -12,8 +12,14 @@ type Session interface {
 	fmt.Stringer
 	tunnel.Interface
 	ID() string
-	Handshakes() (*routing.TargetHost, error)
+	Handshakes() error
 	SetProxy(proxy proxy.Proxy)
+}
+
+type Addr struct {
+	IP     net.IP
+	Port   uint16
+	Domain string
 }
 
 const maxSid = 0x400

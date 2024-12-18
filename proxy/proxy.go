@@ -46,7 +46,7 @@ type Protocol byte
 type Client struct {
 	Conn  net.Conn
 	Host  string
-	Port  int
+	Port  uint16
 	IsTLS bool
 }
 

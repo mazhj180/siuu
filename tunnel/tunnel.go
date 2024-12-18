@@ -24,7 +24,7 @@ type Interface interface {
 	GetProxy() proxy.Proxy
 	GetConn() net.Conn
 	GetHost() string
-	GetPort() int
+	GetPort() uint16
 	ID() string
 }
 

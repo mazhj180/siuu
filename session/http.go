@@ -3,7 +3,6 @@ package session
 import (
 	"bufio"
 	"evil-gopher/proxy"
-	"evil-gopher/routing"
 	"evil-gopher/tunnel"
 	"fmt"
 	"net"
@@ -16,7 +15,7 @@ type httpSession struct {
 	prx   proxy.Proxy
 	conn  net.Conn
 	isTLS bool
-	host  *routing.TargetHost
+	addr  *Addr
 	id    string
 }
 
@@ -28,48 +27,48 @@ func OpenHttpSession(conn net.Conn) Session {
 	}
 }
 
-func (s *httpSession) Handshakes() (*routing.TargetHost, error) {
+func (s *httpSession) Handshakes() error {
 	req, err := http.ReadRequest(bufio.NewReader(s.conn))
 	if err != nil {
-		return nil, err
+		return err
 	}
 	var domain string
-	port := 80
+	var port uint64 = 80
 	if strings.Contains(req.Host, ":") {
 		d, p, _ := net.SplitHostPort(req.Host)
 		domain = d
-		port, _ = strconv.Atoi(p)
+		port, _ = strconv.ParseUint(p, 10, 16)
 	} else {
 		domain = req.Host
 	}
 
-	s.host = &routing.TargetHost{
+	s.addr = &Addr{
 		Domain: domain,
-		Port:   port,
+		Port:   uint16(port),
 	}
 	if req.Method == http.MethodConnect {
 		s.isTLS = true
-		s.host.Port = 443
+		s.addr.Port = 443
 		if _, err = s.conn.Write([]byte(fmt.Sprintf("%s 200 Connection Established\r\n\r\n", req.Proto))); err != nil {
-			return nil, err
+			return err
 		}
 	}
-	return s.host, nil
+	return nil
 }
 
 func (s *httpSession) String() string {
-	return fmt.Sprintf("%s://%s:%d", s.host.Domain, s.host.Port, s.host.Port)
+	return fmt.Sprintf("%s://%s:%d", s.addr.Domain, s.addr.Port, s.addr.Port)
 }
 
 func (s *httpSession) GetHost() string {
-	if s.host.Domain != "" {
-		return s.host.Domain
+	if s.addr.Domain != "" {
+		return s.addr.Domain
 	}
-	return s.host.IP.String()
+	return s.addr.IP.String()
 }
 
-func (s *httpSession) GetPort() int {
-	return s.host.Port
+func (s *httpSession) GetPort() uint16 {
+	return s.addr.Port
 }
 
 func (s *httpSession) GetProtocol() tunnel.Protocol {

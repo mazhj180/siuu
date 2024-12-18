@@ -1,7 +1,7 @@
 package test
 
 import (
-	"gop/logger"
+	"evil-gopher/logger"
 	"path"
 	"runtime"
 	"testing"

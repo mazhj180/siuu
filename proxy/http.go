@@ -14,23 +14,8 @@ type HttpProxy struct {
 	Type     Type
 	Name     string
 	Server   string
-	Port     int
+	Port     uint16
 	Protocol Protocol
-}
-
-func (h *HttpProxy) Dial() (net.Conn, error) {
-	var network string
-	if h.Protocol == TCP {
-		network = "tcp"
-	} else if h.Protocol == UDP {
-		network = "udp"
-	}
-	conn, err := net.Dial(network, net.JoinHostPort(h.Server, strconv.Itoa(h.Port)))
-	if err != nil {
-		return nil, err
-	}
-	_ = conn.(*net.TCPConn).SetKeepAlive(true)
-	return conn, nil
 }
 
 func (h *HttpProxy) Act(client *Client) error {
@@ -57,7 +42,7 @@ func (h *HttpProxy) actOfTcp(client *Client) error {
 		}
 	}(conn)
 
-	addr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(h.Server, strconv.Itoa(h.Port)))
+	addr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(h.Server, strconv.FormatUint(uint64(h.Port), 10)))
 	if err != nil {
 		return err
 	}
@@ -101,9 +86,7 @@ func (h *HttpProxy) actOfTcp(client *Client) error {
 		}
 	}()
 
-	if _, err = io.Copy(conn, agency); err != nil {
-		return err
-	}
+	_, err = io.Copy(conn, agency)
 
 	return nil
 }
@@ -124,7 +107,7 @@ func (h *HttpProxy) GetServer() string {
 	return h.Server
 }
 
-func (h *HttpProxy) GetPort() int {
+func (h *HttpProxy) GetPort() uint16 {
 	return h.Port
 }
 

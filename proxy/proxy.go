@@ -55,7 +55,7 @@ type Proxy interface {
 	GetType() Type
 	GetName() string
 	GetServer() string
-	GetPort() int
+	GetPort() uint16
 	GetProtocol() Protocol
 }
 
@@ -67,7 +67,7 @@ type udp interface {
 	actOfUdp(*Client) error
 }
 
-func GetDirect(server string, port int) *DirectProxy {
+func GetDirect(server string, port uint16) *DirectProxy {
 	prx := proxyTable["direct"].(*DirectProxy)
 	cprx := &DirectProxy{}
 	*cprx = *prx

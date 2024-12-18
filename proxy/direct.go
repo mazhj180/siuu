@@ -12,7 +12,7 @@ type DirectProxy struct {
 	Type     Type
 	Name     string
 	Server   string
-	Port     int
+	Port     uint16
 	Protocol Protocol
 }
 
@@ -42,7 +42,7 @@ func (d *DirectProxy) actOfTcp(client *Client) error {
 		}
 	}(conn)
 
-	addr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(client.Host, strconv.Itoa(client.Port)))
+	addr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(client.Host, strconv.FormatUint(uint64(client.Port), 10)))
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func (d *DirectProxy) GetServer() string {
 	return d.Server
 }
 
-func (d *DirectProxy) GetPort() int {
+func (d *DirectProxy) GetPort() uint16 {
 	return d.Port
 }
 

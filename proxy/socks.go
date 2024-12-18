@@ -17,7 +17,7 @@ type SocksProxy struct {
 	Type     Type
 	Name     string
 	Server   string
-	Port     int
+	Port     uint16
 	Username string
 	Password string
 	Protocol Protocol
@@ -51,7 +51,7 @@ func (s *SocksProxy) actOfTcp(client *Client) error {
 		}
 	}(conn)
 
-	addr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(s.Server, strconv.Itoa(s.Port)))
+	addr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(s.Server, strconv.FormatUint(uint64(s.Port), 10)))
 	if err != nil {
 		return err
 	}
@@ -195,9 +195,7 @@ func (s *SocksProxy) actOfTcp(client *Client) error {
 		}
 	}()
 
-	if _, err = io.Copy(conn, agency); err != nil {
-		return err
-	}
+	_, err = io.Copy(conn, agency)
 
 	return nil
 }
@@ -214,7 +212,7 @@ func (s *SocksProxy) GetServer() string {
 	return s.Server
 }
 
-func (s *SocksProxy) GetPort() int {
+func (s *SocksProxy) GetPort() uint16 {
 	return s.Port
 }
 

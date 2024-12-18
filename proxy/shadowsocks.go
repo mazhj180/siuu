@@ -14,7 +14,7 @@ type ShadowSocksProxy struct {
 	Type     Type
 	Name     string
 	Server   string
-	Port     int
+	Port     uint16
 	Cipher   string
 	Password string
 	Protocol Protocol
@@ -48,7 +48,7 @@ func (s *ShadowSocksProxy) actOfTcp(client *Client) error {
 		}
 	}(conn)
 
-	agency, err := net.Dial("tcp", net.JoinHostPort(s.Server, strconv.Itoa(s.Port)))
+	agency, err := net.Dial("tcp", net.JoinHostPort(s.Server, strconv.FormatUint(uint64(s.Port), 10)))
 	if err != nil {
 		return err
 	}
@@ -103,9 +103,7 @@ func (s *ShadowSocksProxy) actOfTcp(client *Client) error {
 		}
 	}()
 
-	if _, err = io.Copy(conn, agency); err != nil {
-		return err
-	}
+	_, err = io.Copy(conn, agency)
 
 	return nil
 }
@@ -122,7 +120,7 @@ func (s *ShadowSocksProxy) GetServer() string {
 	return s.Server
 }
 
-func (s *ShadowSocksProxy) GetPort() int {
+func (s *ShadowSocksProxy) GetPort() uint16 {
 	return s.Port
 }
 

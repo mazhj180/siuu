@@ -43,6 +43,7 @@ func AddRoute(host string, proxy proxy.Proxy) {
 func RemoveRoute(host string) error {
 	rwx.Lock()
 	defer rwx.Unlock()
+
 	if _, ok := table.exacts[host]; ok {
 		delete(table.exacts, host)
 		return nil
@@ -50,12 +51,15 @@ func RemoveRoute(host string) error {
 	slices.DeleteFunc(table.wildcards, func(w *wildcard) bool {
 		return w.rule == host
 	})
+
 	config := util.CreateConfig("conf", "toml")
 	filepath := util.ExpandHomePath(config, "route.table.path")
+
 	rf, err := os.OpenFile(filepath, os.O_RDWR|os.O_TRUNC|os.O_APPEND, 0666)
 	if err != nil {
 		return err
 	}
+
 	bufW := bufio.NewWriter(rf)
 	for _, w := range table.wildcards {
 		if _, err = bufW.WriteString(fmt.Sprintf("%s|%s", w.rule, w.prx.GetName())); err != nil {
@@ -116,25 +120,31 @@ type Router interface {
 
 type TargetHost struct {
 	IP     net.IP
-	Port   int
+	Port   uint16
 	Domain string
 }
 
-func Route(host *TargetHost) (proxy.Proxy, string, error) {
-	if p, ok := table.exacts[host.Domain]; ok {
+func Route(host string, port uint16) (proxy.Proxy, string, error) {
+	if p, ok := table.exacts[host]; ok {
 		return p, "exacts", nil
 	}
 
 	for _, w := range table.wildcards {
-		if w.rule[1:] == host.Domain {
+		if w.rule[1:] == host {
 			return w.prx, "wildcards", nil
 		}
 	}
 
 	if router == nil {
-		return proxy.GetDirect(host.Domain, host.Port), "direct", nil
+		return proxy.GetDirect(host, port), "none", nil
 	}
-	r, err := router.Route(host)
+
+	th := &TargetHost{
+		IP:     net.ParseIP(host),
+		Port:   port,
+		Domain: host,
+	}
+	r, err := router.Route(th)
 	if err != nil {
 		return nil, "", err
 	}

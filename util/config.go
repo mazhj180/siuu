@@ -4,10 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/spf13/viper"
-	"os"
 	"path"
 	"runtime"
-	"strings"
 )
 
 var (
@@ -38,16 +36,4 @@ func CreateConfig(file string, fileType string) *viper.Viper {
 	}
 
 	return config
-}
-
-func ExpandHomePath(config *viper.Viper, key string) string {
-	p := config.GetString(key)
-	if strings.HasPrefix(p, "~") {
-		dir, err := os.UserHomeDir()
-		if err != nil {
-			panic(fmt.Errorf("cannot get user home dir: %s", err))
-		}
-		return strings.Replace(p, "~", dir, 1)
-	}
-	return p
 }

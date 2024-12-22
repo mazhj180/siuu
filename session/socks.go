@@ -21,6 +21,7 @@ func OpenSocksSession(conn net.Conn) Session {
 	return &socksSession{
 		id:   sid,
 		conn: conn,
+		prx:  proxy.GetDirect(),
 		addr: addr,
 	}
 }

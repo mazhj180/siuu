@@ -3,9 +3,8 @@ package routing
 import (
 	"bufio"
 	"evil-gopher/proxy"
-	"evil-gopher/util"
 	"fmt"
-	"net"
+	"github.com/spf13/viper"
 	"os"
 	"slices"
 	"sync"
@@ -19,6 +18,7 @@ type wildcard struct {
 type routeTable struct {
 	exacts    map[string]proxy.Proxy
 	wildcards []*wildcard
+	area      map[string]proxy.Proxy
 }
 
 var (
@@ -52,9 +52,9 @@ func RemoveRoute(host string) error {
 		return w.rule == host
 	})
 
-	config := util.CreateConfig("conf", "toml")
-	filepath := util.ExpandHomePath(config, "route.table.path")
-
+	//config := util.CreateConfig("conf", "toml")
+	//filepath := util.ExpandHomePath(config, "route.table.path")
+	filepath := ""
 	rf, err := os.OpenFile(filepath, os.O_RDWR|os.O_TRUNC|os.O_APPEND, 0666)
 	if err != nil {
 		return err
@@ -95,10 +95,12 @@ var (
 	rwxr   sync.RWMutex
 )
 
-func init() {
-	config := util.CreateConfig("conf", "toml")
-	if e := config.GetBool("router.enable"); e {
-		router = NewIPRouter()
+func InitRouter(v *viper.Viper) {
+	enable := v.GetBool("router.true")
+	if enable {
+		p := v.GetString("router.route.table.path")
+		router = NewDefaultRouter(p, p)
+
 	}
 }
 
@@ -111,17 +113,10 @@ func CloseRouter() {
 func OpenRouter() {
 	rwxr.Lock()
 	defer rwxr.Unlock()
-	router = NewIPRouter()
 }
 
 type Router interface {
-	Route(*TargetHost) (proxy.Proxy, error)
-}
-
-type TargetHost struct {
-	IP     net.IP
-	Port   uint16
-	Domain string
+	Route(string) (proxy.Proxy, error)
 }
 
 func Route(host string, port uint16) (proxy.Proxy, string, error) {
@@ -136,15 +131,10 @@ func Route(host string, port uint16) (proxy.Proxy, string, error) {
 	}
 
 	if router == nil {
-		return proxy.GetDirect(host, port), "none", nil
+		return proxy.GetDirect(), "none", nil
 	}
 
-	th := &TargetHost{
-		IP:     net.ParseIP(host),
-		Port:   port,
-		Domain: host,
-	}
-	r, err := router.Route(th)
+	r, err := router.Route(host)
 	if err != nil {
 		return nil, "", err
 	}

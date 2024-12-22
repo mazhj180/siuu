@@ -83,9 +83,9 @@ func (s *SocksProxy) actOfTcp(client *Client) error {
 		return ErrSocksAuthentication
 	}
 
-	// 进行用户名/密码认证
-	// 用户名密码认证子协商协议:
-	// VER=0x01, ULEN=用户名长度, USERNAME, PLEN=密码长度, PASSWORD
+	// Username/password authentication
+	// Username Password Authentication Sub-Negotiation Protocol.
+	// VER=0x01, ULEN=xx, USERNAME, PLEN=xx, PASSWORD
 	uLen, pLen := byte(len(s.Username)), byte(len(s.Password))
 	authMsg := make([]byte, uLen+pLen+3)
 	authMsg[0] = 0x01 // ver
@@ -100,8 +100,8 @@ func (s *SocksProxy) actOfTcp(client *Client) error {
 		return err
 	}
 
-	// 读取认证结果
-	// 返回 ver=0x01, status=0x00 成功
+	// Read authentication results
+	// ver=0x01, status=0x00 success
 	resp := make([]byte, 2)
 	if _, err = io.ReadFull(agency, resp); err != nil {
 		return err
@@ -110,8 +110,8 @@ func (s *SocksProxy) actOfTcp(client *Client) error {
 		return ErrSocksAuthentication
 	}
 
-	// 认证成功后，向上游发送 CONNECT 请求
-	// 格式: VER=0x05, CMD=0x01, RSV=0x00, ATYP=?, DST.ADDR, DST.PORT
+	// After successful authentication, send a CONNECT request to the upstream
+	// formatting: VER=0x05, CMD=0x01, RSV=0x00, ATYP=?, DST.ADDR, DST.PORT
 	var atyp byte
 	var addrBytes []byte
 	var addrLen byte
@@ -139,8 +139,8 @@ func (s *SocksProxy) actOfTcp(client *Client) error {
 		return err
 	}
 
-	// 读取上游响应
-	// 响应格式同请求: VER, REP, RSV, ATYP, BND.ADDR, BND.PORT
+	// Read upstream response
+	// formatting: VER, REP, RSV, ATYP, BND.ADDR, BND.PORT
 	resp = make([]byte, 4)
 	if _, err = io.ReadFull(agency, resp); err != nil {
 		return err
@@ -152,7 +152,7 @@ func (s *SocksProxy) actOfTcp(client *Client) error {
 	rep := resp[1]
 	atyp = resp[3]
 
-	// 读取服务器的绑定信息，判断响应是否合法
+	// Read the server's binding information and determine if the response is valid.
 	switch atyp {
 	case 0x01:
 		addrLen = 4
@@ -176,12 +176,11 @@ func (s *SocksProxy) actOfTcp(client *Client) error {
 		return err
 	}
 
-	// 根据 rep 判断上游是否连接成功
+	// According to rep, judge whether the upstream connection is successful
 	if rep != 0x00 {
 		return ErrProxyResp
 	}
 
-	// 转发数据: 客户端<->代理
 	go func() {
 		defer func(agency *net.TCPConn) {
 			if e := agency.Close(); e != nil {

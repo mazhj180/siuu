@@ -4,12 +4,14 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/binary"
 	"evil-gopher/logger"
 	"io"
 	"net"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type TrojanProxy struct {
@@ -53,10 +55,24 @@ func (t *TrojanProxy) actOfTcp(client *Client) error {
 
 	// tls handshake
 	tlsConfig := &tls.Config{
-		InsecureSkipVerify: true,
-		ServerName:         t.Sni,
+		ServerName: t.Sni,
+		VerifyPeerCertificate: func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+			return nil
+		},
 	}
 	tlsConn := tls.Client(agency, tlsConfig)
+
+	defer func(tlsConn *tls.Conn) {
+		_ = tlsConn.Close()
+	}(tlsConn)
+	err = tlsConn.SetDeadline(time.Now().Add(30 * time.Second))
+	if err != nil {
+		return err
+	}
+
+	if err = tlsConn.Handshake(); err != nil {
+		return err
+	}
 
 	// trojan handshake
 	authMsg := t.Password + "\r\n"

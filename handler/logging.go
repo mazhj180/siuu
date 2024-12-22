@@ -2,19 +2,7 @@ package handler
 
 import (
 	"evil-gopher/logger"
-	"fmt"
-	"path"
-	"runtime"
 )
-
-func init() {
-	_, filename, _, _ := runtime.Caller(0)
-	logFile := path.Dir(filename+"/../../") + "/log/system.log"
-	fmt.Printf(logFile)
-	logger.InitSystemLog(logFile, 10*logger.MB, logger.InfoLevel)
-	logFile = path.Dir(filename+"/../../") + "/log/proxy.log"
-	logger.InitProxyLog(logFile, 10*logger.MB, logger.InfoLevel)
-}
 
 func loggingHandle(ctx *context) {
 	s := ctx.session

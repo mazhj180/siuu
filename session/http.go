@@ -24,6 +24,7 @@ func OpenHttpSession(conn net.Conn) Session {
 	return &httpSession{
 		conn: conn,
 		id:   sid,
+		prx:  proxy.GetDirect(),
 	}
 }
 

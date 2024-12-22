@@ -2,7 +2,7 @@ package handler
 
 import (
 	"evil-gopher/logger"
-	"evil-gopher/routing"
+	"evil-gopher/proxy"
 	"evil-gopher/tunnel"
 )
 
@@ -14,15 +14,15 @@ func proxyHandle(ctx *context) {
 		return
 	}
 	logger.SDebug("<%s> client handshakes with gop server success", s.ID())
-	host, ip := s.GetHost(), s.GetPort()
+	host := s.GetHost()
 	logger.SDebug("<%s> client dst addr was [%s]", s.ID(), host)
 
-	prx, r, err := routing.Route(host, ip)
-	if err != nil {
-		logger.SError("<%s> route routing failed; err: %s", s.ID(), err)
-	}
-	logger.SDebug("<%s> client routing using by [%s] router", s.ID(), r)
-	s.SetProxy(prx)
+	//prx, r, err := routing.Route(host, ip)
+	//if err != nil {
+	//	logger.SError("<%s> route routing failed; err: %s", s.ID(), err)
+	//}
+	//logger.SDebug("<%s> client routing using by [%s] router", s.ID(), r)
+	s.SetProxy(proxy.GetSelectedProxy())
 
 	tunnel.T.In(s)
 	ctx.next()

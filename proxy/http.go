@@ -1,7 +1,6 @@
 package proxy
 
 import (
-	"encoding/json"
 	"evil-gopher/logger"
 	"fmt"
 	"io"
@@ -113,12 +112,4 @@ func (h *HttpProxy) GetPort() uint16 {
 
 func (h *HttpProxy) GetProtocol() Protocol {
 	return h.Protocol
-}
-
-func (h *HttpProxy) String() string {
-	jbytes, err := json.Marshal(h)
-	if err != nil {
-		return ""
-	}
-	return string(jbytes)
 }

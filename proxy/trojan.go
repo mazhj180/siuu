@@ -1,17 +1,16 @@
 package proxy
 
 import (
-	"bufio"
 	"bytes"
+	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/binary"
+	"encoding/hex"
 	"evil-gopher/logger"
 	"io"
 	"net"
 	"strconv"
-	"strings"
-	"time"
 )
 
 type TrojanProxy struct {
@@ -35,23 +34,7 @@ func (t *TrojanProxy) Act(client *Client) error {
 
 func (t *TrojanProxy) actOfTcp(client *Client) error {
 	conn := client.Conn
-
-	defer func(conn net.Conn) {
-		err := conn.Close()
-		if err != nil {
-			logger.SError("<%s> original connection close err :", err)
-		}
-	}(conn)
-
-	addr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(t.Server, strconv.FormatUint(uint64(t.Port), 10)))
-	if err != nil {
-		return err
-	}
-
-	agency, err := net.DialTCP("tcp", nil, addr)
-	if err != nil {
-		return err
-	}
+	defer conn.Close()
 
 	// tls handshake
 	tlsConfig := &tls.Config{
@@ -60,34 +43,20 @@ func (t *TrojanProxy) actOfTcp(client *Client) error {
 			return nil
 		},
 	}
-	tlsConn := tls.Client(agency, tlsConfig)
 
-	defer func(tlsConn *tls.Conn) {
-		_ = tlsConn.Close()
-	}(tlsConn)
-	err = tlsConn.SetDeadline(time.Now().Add(30 * time.Second))
+	agency, err := tls.Dial("tcp", net.JoinHostPort(t.Server, strconv.FormatUint(uint64(t.Port), 10)), tlsConfig)
 	if err != nil {
 		return err
 	}
-
-	if err = tlsConn.Handshake(); err != nil {
-		return err
-	}
+	defer agency.Close()
 
 	// trojan handshake
-	authMsg := t.Password + "\r\n"
-	if _, err = tlsConn.Write([]byte(authMsg)); err != nil {
+	hash := sha256.New224()
+	hash.Write([]byte(t.Password))
+	pwd := hex.EncodeToString(hash.Sum(nil))
+	authMsg := pwd + "\r\n"
+	if _, err = agency.Write([]byte(authMsg)); err != nil {
 		return err
-	}
-
-	r := bufio.NewReader(tlsConn)
-	resp, err := r.ReadString('\n')
-	if err != nil {
-		return err
-	}
-
-	if !strings.Contains(resp, "successful") {
-		return ErrProxyResp
 	}
 
 	// send connect req
@@ -97,7 +66,7 @@ func (t *TrojanProxy) actOfTcp(client *Client) error {
 	var atyp byte
 	var addrBytes []byte
 	var addrLen byte
-	var portBytes []byte
+	var portBytes = make([]byte, 2)
 
 	ip := net.ParseIP(client.Host)
 	if ip4 := ip.To4(); ip4 != nil {
@@ -121,36 +90,20 @@ func (t *TrojanProxy) actOfTcp(client *Client) error {
 	binary.BigEndian.PutUint16(portBytes, client.Port)
 	buf.Write(portBytes)
 
-	if _, err = tlsConn.Write(buf.Bytes()); err != nil {
+	if _, err = agency.Write(append(buf.Bytes(), []byte{0x0d, 0x0a}...)); err != nil {
 		return err
-	}
-
-	// analyze resp
-	reply := make([]byte, 10)
-	if _, err = io.ReadFull(tlsConn, reply); err != nil {
-		return err
-	}
-
-	rep := reply[1]
-	if rep != 0x01 {
-		return ErrProxyResp
 	}
 
 	// bidirectional forwarding
 	go func() {
-		defer func(tlsConn net.Conn) {
-			if e := tlsConn.Close(); e != nil {
-				logger.SError("<%s> agency connection close err :", err)
-			}
-		}(tlsConn)
-
-		if _, e := io.Copy(tlsConn, conn); e != nil {
-			logger.SError("<%s> data copy err :", e)
-			return
+		if _, e := io.Copy(agency, conn); e != nil {
+			logger.SWarn("<%s> %s", client.Sid, e)
 		}
 	}()
 
-	_, _ = io.Copy(conn, agency)
+	if _, err = io.Copy(conn, agency); err != nil {
+		logger.SWarn("<%s> %s", client.Sid, err)
+	}
 
 	return nil
 

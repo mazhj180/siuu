@@ -43,13 +43,7 @@ func (s *SocksProxy) Act(client *Client) error {
 func (s *SocksProxy) actOfTcp(client *Client) error {
 
 	conn := client.Conn
-
-	defer func(conn net.Conn) {
-		err := conn.Close()
-		if err != nil {
-			logger.SError("<%s> original connection close err :", err)
-		}
-	}(conn)
+	defer conn.Close()
 
 	addr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(s.Server, strconv.FormatUint(uint64(s.Port), 10)))
 	if err != nil {
@@ -60,6 +54,7 @@ func (s *SocksProxy) actOfTcp(client *Client) error {
 	if err != nil {
 		return err
 	}
+	defer agency.Close()
 
 	if err = agency.SetKeepAlive(true); err != nil {
 		return err
@@ -182,19 +177,14 @@ func (s *SocksProxy) actOfTcp(client *Client) error {
 	}
 
 	go func() {
-		defer func(agency *net.TCPConn) {
-			if e := agency.Close(); e != nil {
-				logger.SError("<%s> agency connection close err :", err)
-			}
-		}(agency)
-
 		if _, e := io.Copy(agency, conn); e != nil {
-			logger.SError("<%s> data copy err :", e)
-			return
+			logger.SWarn("<%s> %s", client.Sid, err)
 		}
 	}()
 
-	_, err = io.Copy(conn, agency)
+	if _, err = io.Copy(conn, agency); err != nil {
+		logger.SWarn("<%s> %s", client.Sid, err)
+	}
 
 	return nil
 }

@@ -1,13 +1,13 @@
 package routing
 
 import (
-	"evil-gopher/proxy"
-	"evil-gopher/util"
 	"fmt"
 	"github.com/lionsoul2014/ip2region/binding/golang/xdb"
 	"net"
 	"os"
 	"path"
+	"siu/tunnel/proxy"
+	"siu/util"
 	"strings"
 )
 

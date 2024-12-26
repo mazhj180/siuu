@@ -2,9 +2,9 @@ package proxy
 
 import (
 	"errors"
-	"evil-gopher/logger"
 	"io"
 	"net"
+	"siu/logger"
 	"strconv"
 )
 

@@ -1,9 +1,9 @@
 package test
 
 import (
-	"evil-gopher/logger"
 	"path"
 	"runtime"
+	"siu/logger"
 	"testing"
 )
 

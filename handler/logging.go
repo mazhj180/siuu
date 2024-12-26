@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"evil-gopher/logger"
+	"siu/logger"
 )
 
 func loggingHandle(ctx *context) {

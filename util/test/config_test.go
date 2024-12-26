@@ -1,8 +1,8 @@
 package test
 
 import (
-	"evil-gopher/util"
 	"fmt"
+	"siu/util"
 	"testing"
 )
 

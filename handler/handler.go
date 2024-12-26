@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"evil-gopher/proxy"
-	"evil-gopher/session"
+	"siu/session"
+	"siu/tunnel/proxy"
 )
 
 var (

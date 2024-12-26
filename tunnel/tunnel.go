@@ -1,8 +1,8 @@
 package tunnel
 
 import (
-	"evil-gopher/proxy"
 	"net"
+	"siu/tunnel/proxy"
 )
 
 const (

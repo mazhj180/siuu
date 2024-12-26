@@ -1,4 +1,4 @@
-module evil-gopher
+module siu
 
 go 1.23.0
 

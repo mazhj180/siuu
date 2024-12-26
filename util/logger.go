@@ -1,8 +1,8 @@
 package util
 
 import (
-	"evil-gopher/logger"
 	"fmt"
+	"siu/logger"
 	"strings"
 )
 

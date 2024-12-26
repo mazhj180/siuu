@@ -3,10 +3,10 @@ package proxy
 import (
 	"encoding/binary"
 	"encoding/json"
-	"evil-gopher/logger"
 	"github.com/shadowsocks/go-shadowsocks2/core"
 	"io"
 	"net"
+	"siu/logger"
 	"strconv"
 )
 

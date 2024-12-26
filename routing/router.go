@@ -2,10 +2,10 @@ package routing
 
 import (
 	"bufio"
-	"evil-gopher/proxy"
 	"fmt"
 	"github.com/spf13/viper"
 	"os"
+	"siu/tunnel/proxy"
 	"slices"
 	"sync"
 )

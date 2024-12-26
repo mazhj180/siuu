@@ -1,13 +1,13 @@
 package main
 
 import (
-	"evil-gopher/logger"
-	"evil-gopher/proxy"
-	"evil-gopher/server"
-	"evil-gopher/util"
 	"os"
 	"os/signal"
 	"path"
+	"siu/logger"
+	"siu/server"
+	"siu/tunnel/proxy"
+	"siu/util"
 )
 
 var (

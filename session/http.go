@@ -2,11 +2,11 @@ package session
 
 import (
 	"bufio"
-	"evil-gopher/proxy"
-	"evil-gopher/tunnel"
 	"fmt"
 	"net"
 	"net/http"
+	"siu/tunnel"
+	"siu/tunnel/proxy"
 	"strconv"
 	"strings"
 )

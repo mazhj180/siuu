@@ -1,9 +1,9 @@
 package handler
 
 import (
-	"evil-gopher/logger"
-	"evil-gopher/proxy"
-	"evil-gopher/tunnel"
+	"siu/logger"
+	"siu/tunnel"
+	"siu/tunnel/proxy"
 )
 
 func proxyHandle(ctx *context) {

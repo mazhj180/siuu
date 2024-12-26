@@ -2,16 +2,16 @@ package test
 
 import (
 	"encoding/json"
-	"evil-gopher/proxy"
-	"evil-gopher/util"
 	"fmt"
+	proxy2 "siu/tunnel/proxy"
+	"siu/util"
 	"testing"
 	"time"
 )
 
 func init() {
 	v := util.CreateConfig("conf", "toml")
-	proxy.Init(v)
+	proxy2.Init(v)
 }
 
 func TestAddPrx(t *testing.T) {
@@ -26,29 +26,29 @@ func TestAddPrx(t *testing.T) {
 		"Sni": "sxxasd"
 	}`
 
-	var tp proxy.TrojanProxy
+	var tp proxy2.TrojanProxy
 	err := json.Unmarshal([]byte(data), &tp)
 	if err != nil {
 		t.Error(err)
 	}
 
-	_ = proxy.AddProxies(&tp)
+	_ = proxy2.AddProxies(&tp)
 
-	for _, v := range proxy.GetProxies() {
+	for _, v := range proxy2.GetProxies() {
 		fmt.Println(v)
 	}
 
 }
 
 func TestReadPrx(t *testing.T) {
-	for _, v := range proxy.GetProxies() {
+	for _, v := range proxy2.GetProxies() {
 		fmt.Println(v)
 	}
 }
 
 func TestRemovePrx(t *testing.T) {
-	proxy.RemoveProxies("proxy1")
-	for _, v := range proxy.GetProxies() {
+	proxy2.RemoveProxies("proxy1")
+	for _, v := range proxy2.GetProxies() {
 		fmt.Println(v)
 	}
 	time.Sleep(2 * time.Second)

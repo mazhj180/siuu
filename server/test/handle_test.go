@@ -5,5 +5,4 @@ import (
 )
 
 func TestSer(t *testing.T) {
-
 }

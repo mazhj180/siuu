@@ -1,10 +1,10 @@
 package session
 
 import (
-	"evil-gopher/proxy"
-	"evil-gopher/tunnel"
 	"fmt"
 	"net"
+	"siu/tunnel"
+	"siu/tunnel/proxy"
 	"sync/atomic"
 )
 

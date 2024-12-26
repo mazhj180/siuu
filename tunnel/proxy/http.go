@@ -1,10 +1,10 @@
 package proxy
 
 import (
-	"evil-gopher/logger"
 	"fmt"
 	"io"
 	"net"
+	"siu/logger"
 	"strconv"
 	"strings"
 )

@@ -1,8 +1,8 @@
 package tunnel
 
 import (
-	"evil-gopher/logger"
-	"evil-gopher/proxy"
+	"siu/logger"
+	"siu/tunnel/proxy"
 )
 
 func dispatch() {

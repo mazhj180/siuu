@@ -8,11 +8,11 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/pem"
-	"evil-gopher/proxy"
 	"fmt"
 	"golang.org/x/net/dns/dnsmessage"
 	"net"
 	"net/http"
+	proxy2 "siu/tunnel/proxy"
 	"strconv"
 	"testing"
 )
@@ -22,12 +22,12 @@ func TestTrojan(t *testing.T) {
 	data := "GET / HTTP/1.1\nHost: www.bing.com\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7\nAccept-Encoding: gzip, deflate, br\nAccept-Language: en-US,en;q=0.9\nConnection: keep-alive"
 
 	// 服务器地址和端口
-	tp := &proxy.TrojanProxy{
-		Type:     proxy.TROJAN,
+	tp := &proxy2.TrojanProxy{
+		Type:     proxy2.TROJAN,
 		Name:     "xxxxxxx",
 		Server:   "xxxxxx",
 		Port:     0000,
-		Protocol: proxy.TCP,
+		Protocol: proxy2.TCP,
 		Password: "xcxasxxx",
 		Sni:      "xxxxxx",
 	}

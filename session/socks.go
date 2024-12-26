@@ -2,10 +2,10 @@ package session
 
 import (
 	"encoding/binary"
-	"evil-gopher/proxy"
-	"evil-gopher/tunnel"
 	"fmt"
 	"net"
+	"siu/tunnel"
+	"siu/tunnel/proxy"
 )
 
 type socksSession struct {

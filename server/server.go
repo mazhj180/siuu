@@ -1,12 +1,12 @@
 package server
 
 import (
-	"evil-gopher/handler"
-	"evil-gopher/logger"
-	"evil-gopher/session"
 	"fmt"
 	"net"
 	"net/http"
+	"siu/handler"
+	"siu/logger"
+	"siu/session"
 )
 
 func StartServer(port uint16) {

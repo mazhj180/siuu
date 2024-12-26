@@ -158,12 +158,12 @@ type udp interface {
 	actOfUdp(*Client) error
 }
 
-type proxyWrapper struct {
+type ProxyWrapper struct {
 	Type  Type  `json:"type"`
 	Value Proxy `json:"value"`
 }
 
-func (pw *proxyWrapper) UnmarshalJSON(data []byte) error {
+func (pw *ProxyWrapper) UnmarshalJSON(data []byte) error {
 
 	pm := make(map[string]any)
 	if err := json.Unmarshal(data, &pm); err != nil {
@@ -265,7 +265,7 @@ func (p pout) add(proxies ...Proxy) error {
 	for _, prx := range proxies {
 
 		typ := prx.GetType()
-		pw := &proxyWrapper{
+		pw := &ProxyWrapper{
 			Type:  typ,
 			Value: prx,
 		}
@@ -275,7 +275,7 @@ func (p pout) add(proxies ...Proxy) error {
 			return fmt.Errorf("failed to marshal proxy: %w", err)
 		}
 
-		// 写入文件，并追加换行符作为分隔符
+		// Write to the file and append newlines as separators
 		if _, err = f.Write(append(data, '\n')); err != nil {
 			return fmt.Errorf("failed to write proxy to file: %w", err)
 		}
@@ -314,7 +314,7 @@ func (p pout) read() ([]Proxy, error) {
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		line := scanner.Bytes()
-		var wrapper proxyWrapper
+		var wrapper ProxyWrapper
 		if err = json.Unmarshal(line, &wrapper); err != nil {
 			return nil, err
 		}
@@ -364,10 +364,12 @@ func AddProxies(proxies ...Proxy) error {
 	return nil
 }
 
-func RemoveProxies(name string) {
+func RemoveProxies(names ...string) {
 	rwx.Lock()
 	defer rwx.Unlock()
-	delete(proxyTable, name)
+	for _, n := range names {
+		delete(proxyTable, n)
+	}
 	out.remove()
 }
 

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"siu/handler"
 	"siu/logger"
+	"siu/server/handle"
 	"siu/session"
 )
 
@@ -14,7 +15,9 @@ func StartServer(port uint16) {
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), mux); err != nil {
 		panic(fmt.Sprintf("hub server start error: %s", err))
 	}
-	mux.Handle("/", http.FileServer(http.Dir("./public")))
+
+	handle.RegisterProxyHandle(mux, "/prx")
+
 }
 
 func StartHttpProxyServer(port uint16) {

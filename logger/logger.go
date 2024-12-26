@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"time"
 )
 
 type Level int
@@ -134,58 +135,63 @@ func Close() {
 	}
 }
 
+func timePrefix() string {
+	t := time.Now()
+	return t.Format("2006-01-02 15:04:05")
+}
+
 func PDebug(format string, v ...any) {
 	if proxyLogLevel > DebugLevel {
 		return
 	}
-	proxyLogger.logCh <- fmt.Sprintf("[Debug]"+format, v...)
+	proxyLogger.logCh <- fmt.Sprintf(timePrefix()+"[Debug]"+format, v...)
 }
 
 func PInfo(format string, v ...any) {
 	if proxyLogLevel > InfoLevel {
 		return
 	}
-	proxyLogger.logCh <- fmt.Sprintf("[Info]"+format, v...)
+	proxyLogger.logCh <- fmt.Sprintf(timePrefix()+"[Info]"+format, v...)
 }
 
 func PWarn(format string, v ...any) {
 	if proxyLogLevel > WarnLevel {
 		return
 	}
-	proxyLogger.logCh <- fmt.Sprintf("[Warn]"+format, v...)
+	proxyLogger.logCh <- fmt.Sprintf(timePrefix()+"[Warn]"+format, v...)
 }
 
 func PError(format string, v ...any) {
 	if proxyLogLevel > ErrorLevel {
 		return
 	}
-	proxyLogger.logCh <- fmt.Sprintf("[Error]"+format, v...)
+	proxyLogger.logCh <- fmt.Sprintf(timePrefix()+"[Error]"+format, v...)
 }
 
 func SDebug(format string, v ...any) {
 	if systemLogLevel > DebugLevel {
 		return
 	}
-	systemLogger.logCh <- fmt.Sprintf("[Debug]"+format, v...)
+	systemLogger.logCh <- fmt.Sprintf(timePrefix()+"[Debug]"+format, v...)
 }
 
 func SInfo(format string, v ...any) {
 	if systemLogLevel > InfoLevel {
 		return
 	}
-	systemLogger.logCh <- fmt.Sprintf("[Info]"+format, v...)
+	systemLogger.logCh <- fmt.Sprintf(timePrefix()+"[Info]"+format, v...)
 }
 
 func SWarn(format string, v ...any) {
 	if systemLogLevel > WarnLevel {
 		return
 	}
-	systemLogger.logCh <- fmt.Sprintf("[Warn]"+format, v...)
+	systemLogger.logCh <- fmt.Sprintf(timePrefix()+"[Warn]"+format, v...)
 }
 
 func SError(format string, v ...any) {
 	if systemLogLevel > ErrorLevel {
 		return
 	}
-	systemLogger.logCh <- fmt.Sprintf("[Error]"+format, v...)
+	systemLogger.logCh <- fmt.Sprintf(timePrefix()+"[Error]"+format, v...)
 }

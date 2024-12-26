@@ -134,6 +134,7 @@ func (p *Protocol) UnmarshalJSON(data []byte) error {
 }
 
 type Client struct {
+	Sid   string
 	Conn  net.Conn
 	Host  string
 	Port  uint16

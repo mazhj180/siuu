@@ -25,6 +25,7 @@ func do(p Interface) {
 		isTLS = h.IsTLS()
 	}
 	client := &proxy.Client{
+		Sid:   sid,
 		Conn:  conn,
 		Host:  host,
 		Port:  port,

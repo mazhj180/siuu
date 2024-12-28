@@ -88,7 +88,7 @@ func (s *ShadowSocksProxy) actOfTcp(client *Client) error {
 
 	go func() {
 		if _, e := io.Copy(agency, conn); e != nil {
-			logger.SWarn("<%s> %s", client.Sid, err)
+			logger.SWarn("<%s> %s", client.Sid, e)
 		}
 	}()
 

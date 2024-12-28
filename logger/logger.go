@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path"
 	"time"
 )
 
@@ -44,6 +45,14 @@ type asyncLogger struct {
 }
 
 func InitProxyLog(filename string, maxSize Unit, level Level) {
+
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		dir := path.Dir(filename)
+		if err = os.MkdirAll(dir, 0755); err != nil {
+			panic(fmt.Errorf("init log file error: %v \n", err))
+		}
+	}
+
 	fout, err := os.OpenFile(filename, os.O_CREATE|os.O_TRUNC|os.O_APPEND|os.O_WRONLY, 0666)
 	if err != nil {
 		panic(fmt.Errorf("init log file error: %v \n", err))
@@ -53,7 +62,6 @@ func InitProxyLog(filename string, maxSize Unit, level Level) {
 		logCh:   make(chan string, 30),
 		done:    make(chan struct{}),
 		file:    fout,
-		writer:  bufio.NewWriter(fout),
 		maxSize: maxSize,
 		logFile: filename,
 	}
@@ -62,6 +70,14 @@ func InitProxyLog(filename string, maxSize Unit, level Level) {
 }
 
 func InitSystemLog(filename string, maxSize Unit, level Level) {
+
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		dir := path.Dir(filename)
+		if err = os.MkdirAll(dir, 0755); err != nil {
+			panic(fmt.Errorf("init log file error: %v \n", err))
+		}
+	}
+
 	fout, err := os.OpenFile(filename, os.O_CREATE|os.O_TRUNC|os.O_APPEND|os.O_WRONLY, 0666)
 	if err != nil {
 		panic(fmt.Errorf("init log file error: %v \n", err))
@@ -80,8 +96,12 @@ func InitSystemLog(filename string, maxSize Unit, level Level) {
 }
 
 func (a *asyncLogger) rotate() error {
-	if a.file != nil {
+
+	if a.writer != nil {
 		_ = a.writer.Flush()
+	}
+
+	if a.file != nil {
 		_ = a.file.Close()
 	}
 
@@ -92,7 +112,9 @@ func (a *asyncLogger) rotate() error {
 	a.currentSize = 0
 
 	a.file = fout
-	a.writer = bufio.NewWriter(fout)
+	if a.writer != nil {
+		a.writer = bufio.NewWriter(fout)
+	}
 
 	return nil
 }
@@ -107,17 +129,32 @@ func (a *asyncLogger) startWriter() {
 					_, _ = os.Stderr.WriteString(fmt.Sprintf("[ERROR] log rotate wrong : %s\n", err))
 				}
 			}
-			if n, err := a.writer.WriteString(msg + "\n"); err != nil {
-				_, _ = os.Stderr.WriteString(fmt.Sprintf("[ERROR] log write wrong : %s\n", err))
+			if a.writer != nil {
+				if n, err := a.writer.WriteString(msg + "\n"); err != nil {
+					_, _ = os.Stderr.WriteString(fmt.Sprintf("[ERROR] log write wrong : %s\n", err))
+				} else {
+					a.currentSize += n
+				}
 			} else {
-				a.currentSize += n
+				if n, err := a.file.WriteString(msg + "\n"); err != nil {
+					_, _ = os.Stderr.WriteString(fmt.Sprintf("[ERROR] log write wrong : %s\n", err))
+				} else {
+					a.currentSize += n
+				}
 			}
+
 		case <-a.done:
 			for len(a.logCh) > 0 {
 				msg := <-a.logCh
-				_, _ = a.writer.WriteString(msg + "\n")
+				if a.writer != nil {
+					_, _ = a.writer.WriteString(msg + "\n")
+				} else {
+					_, _ = a.file.WriteString(msg + "\n")
+				}
 			}
-			_ = a.writer.Flush()
+			if a.writer != nil {
+				_ = a.writer.Flush()
+			}
 			_ = a.file.Close()
 			a.writer = nil
 			close(a.logCh)

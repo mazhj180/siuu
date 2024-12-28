@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"siu/tunnel"
+	"siu/server/store"
+	"siu/tunnel/proto"
 	"siu/tunnel/proxy"
 	"strconv"
 	"strings"
@@ -24,7 +25,7 @@ func OpenHttpSession(conn net.Conn) Session {
 	return &httpSession{
 		conn: conn,
 		id:   sid,
-		prx:  proxy.GetDirect(),
+		prx:  store.GetDirect(),
 	}
 }
 
@@ -72,8 +73,8 @@ func (s *httpSession) GetPort() uint16 {
 	return s.addr.Port
 }
 
-func (s *httpSession) GetProtocol() tunnel.Protocol {
-	return tunnel.HTTP
+func (s *httpSession) GetProtocol() proto.Protocol {
+	return proto.HTTP
 }
 
 func (s *httpSession) GetProxy() proxy.Proxy {

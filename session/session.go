@@ -3,14 +3,14 @@ package session
 import (
 	"fmt"
 	"net"
-	"siu/tunnel"
+	"siu/tunnel/proto"
 	"siu/tunnel/proxy"
 	"sync/atomic"
 )
 
 type Session interface {
 	fmt.Stringer
-	tunnel.Interface
+	proto.Interface
 	ID() string
 	Handshakes() error
 	SetProxy(proxy proxy.Proxy)

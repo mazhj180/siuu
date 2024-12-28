@@ -4,7 +4,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
-	"siu/tunnel"
+	"siu/server/store"
+	"siu/tunnel/proto"
 	"siu/tunnel/proxy"
 )
 
@@ -21,7 +22,7 @@ func OpenSocksSession(conn net.Conn) Session {
 	return &socksSession{
 		id:   sid,
 		conn: conn,
-		prx:  proxy.GetDirect(),
+		prx:  store.GetDirect(),
 		addr: addr,
 	}
 }
@@ -136,6 +137,6 @@ func (s *socksSession) GetConn() net.Conn {
 	return s.conn
 }
 
-func (s *socksSession) GetProtocol() tunnel.Protocol {
-	return tunnel.SOCKS
+func (s *socksSession) GetProtocol() proto.Protocol {
+	return proto.SOCKS
 }

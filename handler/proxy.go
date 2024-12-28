@@ -2,8 +2,8 @@ package handler
 
 import (
 	"siu/logger"
+	"siu/routing"
 	"siu/tunnel"
-	"siu/tunnel/proxy"
 )
 
 func proxyHandle(ctx *context) {
@@ -17,12 +17,15 @@ func proxyHandle(ctx *context) {
 	host := s.GetHost()
 	logger.SDebug("<%s> client dst addr was [%s]", s.ID(), host)
 
-	//prx, r, err := routing.Route(host, ip)
-	//if err != nil {
-	//	logger.SError("<%s> route routing failed; err: %s", s.ID(), err)
-	//}
-	//logger.SDebug("<%s> client routing using by [%s] router", s.ID(), r)
-	s.SetProxy(proxy.GetSelectedProxy())
+	r := routing.R()
+	if r != nil {
+		if prx, err := r.Route(host); err != nil {
+			logger.SWarn("<%s> route router failed; err: %s", s.ID(), err)
+		} else {
+			logger.SDebug("<%s> client routing using by [%s] router", s.ID(), r.Name())
+			s.SetProxy(prx)
+		}
+	}
 
 	tunnel.T.In(s)
 	ctx.next()

@@ -5,8 +5,9 @@ import (
 	"os/signal"
 	"path"
 	"siu/logger"
+	"siu/routing"
 	"siu/server"
-	"siu/tunnel/proxy"
+	"siu/server/store"
 	"siu/util"
 )
 
@@ -25,12 +26,26 @@ func init() {
 	logPath := sysViper.GetString("log.path")
 	logger.InitSystemLog(path.Dir(logPath)+"/system.log", 10*logger.MB, util.LogLevel(sl))
 	logger.InitProxyLog(path.Dir(logPath)+"/proxy.log", 1*logger.MB, util.LogLevel(pl))
+
 	serverPort = sysViper.GetUint16("server.port")
 	httpPort = sysViper.GetUint16("server.proxy.http.port")
 	socksPort = sysViper.GetUint16("server.proxy.socks.port")
-	proxy.Init(sysViper)
+
+	prxPath := sysViper.GetString("proxy.path")
+	prxPath = util.ExpandHomePath(prxPath)
+	store.InitProxy(prxPath)
 	_, _ = os.Stdout.WriteString("load proxy\n")
-	_, _ = os.Stdout.WriteString("evil gopher welcomes you\n")
+
+	if sysViper.GetBool("router.enable") {
+		routePath := sysViper.GetString("router.route.path")
+		routePath = util.ExpandHomePath(routePath)
+
+		xdbPath := sysViper.GetString("router.xdb.path")
+		xdbPath = util.ExpandHomePath(xdbPath)
+		routing.InitRouter(routePath, xdbPath)
+		_, _ = os.Stdout.WriteString("load router\n")
+	}
+	_, _ = os.Stdout.WriteString("siu welcomes you\n")
 
 }
 

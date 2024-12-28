@@ -2,6 +2,7 @@ package tunnel
 
 import (
 	"siu/logger"
+	"siu/tunnel/proto"
 	"siu/tunnel/proxy"
 )
 
@@ -15,12 +16,12 @@ func dispatch() {
 	}
 }
 
-func do(p Interface) {
+func do(p proto.Interface) {
 	sid := p.ID()
 	host, port, conn := p.GetHost(), p.GetPort(), p.GetConn()
 
 	var isTLS bool
-	h, ok := p.(HttpInterface)
+	h, ok := p.(proto.HttpInterface)
 	if ok {
 		isTLS = h.IsTLS()
 	}

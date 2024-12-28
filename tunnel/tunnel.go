@@ -1,41 +1,13 @@
 package tunnel
 
 import (
-	"net"
-	"siu/tunnel/proxy"
+	"siu/tunnel/proto"
 )
-
-const (
-	HTTP Protocol = iota
-	SOCKS
-)
-
-type Protocol byte
-
-func (p Protocol) String() string {
-	if p == HTTP {
-		return "http"
-	}
-	return "socks"
-}
-
-type Interface interface {
-	GetProtocol() Protocol
-	GetProxy() proxy.Proxy
-	GetConn() net.Conn
-	GetHost() string
-	GetPort() uint16
-	ID() string
-}
-
-type HttpInterface interface {
-	IsTLS() bool
-}
 
 var (
-	inCh   chan Interface
-	outCh  chan Interface
-	buffer []Interface
+	inCh   chan proto.Interface
+	outCh  chan proto.Interface
+	buffer []proto.Interface
 	T      Tunnel
 )
 
@@ -46,8 +18,8 @@ func init() {
 }
 
 type Tunnel interface {
-	In(Interface)
-	Out() (Interface, bool)
+	In(proto.Interface)
+	Out() (proto.Interface, bool)
 }
 
 type tunnel struct {
@@ -57,19 +29,19 @@ func initTunnel() {
 	T = new(tunnel)
 }
 
-func (t *tunnel) In(v Interface) {
+func (t *tunnel) In(v proto.Interface) {
 	inCh <- v
 }
 
-func (t *tunnel) Out() (Interface, bool) {
+func (t *tunnel) Out() (proto.Interface, bool) {
 	v, ok := <-outCh
 	return v, ok
 }
 
 func initInfiniteCh() {
-	buffer = make([]Interface, 0, 10)
-	inCh = make(chan Interface, 10)
-	outCh = make(chan Interface, 1)
+	buffer = make([]proto.Interface, 0, 10)
+	inCh = make(chan proto.Interface, 10)
+	outCh = make(chan proto.Interface, 1)
 
 	go func() {
 		for {

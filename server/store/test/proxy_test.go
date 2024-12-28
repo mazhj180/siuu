@@ -3,15 +3,14 @@ package test
 import (
 	"encoding/json"
 	"fmt"
-	proxy2 "siu/tunnel/proxy"
+	"siu/server/store"
+	"siu/tunnel/proxy"
 	"siu/util"
 	"testing"
-	"time"
 )
 
 func init() {
 	v := util.CreateConfig("conf", "toml")
-	proxy2.Init(v)
 }
 
 func TestAddPrx(t *testing.T) {
@@ -26,30 +25,16 @@ func TestAddPrx(t *testing.T) {
 		"Sni": "sxxasd"
 	}`
 
-	var tp proxy2.TrojanProxy
+	var tp proxy.TrojanProxy
 	err := json.Unmarshal([]byte(data), &tp)
 	if err != nil {
 		t.Error(err)
 	}
 
-	_ = proxy2.AddProxies(&tp)
+	_ = store.AddProxies(&tp)
 
-	for _, v := range proxy2.GetProxies() {
+	for _, v := range store.GetProxies() {
 		fmt.Println(v)
 	}
 
-}
-
-func TestReadPrx(t *testing.T) {
-	for _, v := range proxy2.GetProxies() {
-		fmt.Println(v)
-	}
-}
-
-func TestRemovePrx(t *testing.T) {
-	proxy2.RemoveProxies("proxy1")
-	for _, v := range proxy2.GetProxies() {
-		fmt.Println(v)
-	}
-	time.Sleep(2 * time.Second)
 }

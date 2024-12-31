@@ -4,12 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"github.com/spf13/viper"
+	"os"
 	"path"
 	"runtime"
 )
 
 var (
 	ProjectRootPath = path.Dir(concurrentPath()+"/../") + "/"
+	AppRootPath     = executePath() + "/"
 )
 
 func concurrentPath() string {
@@ -17,9 +19,20 @@ func concurrentPath() string {
 	return path.Dir(filename)
 }
 
+func executePath() string {
+	filename := GetHomeDir() + "/.siu/conf/"
+	dir := path.Dir(filename)
+	if _, err := os.Stat(dir); err != nil && os.IsNotExist(err) {
+		if err = os.MkdirAll(dir, os.ModePerm); err != nil {
+			panic(fmt.Errorf("cannot create directory %s, err: %s", dir, err))
+		}
+	}
+	return path.Dir(dir + "/../")
+}
+
 func CreateConfig(file string, fileType string) *viper.Viper {
 
-	configPath := path.Join(ProjectRootPath, "conf/")
+	configPath := path.Join(AppRootPath, "conf/")
 	config := viper.New()
 	config.AddConfigPath(configPath)
 	config.SetConfigName(file)

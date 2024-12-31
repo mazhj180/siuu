@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"siu/tunnel/proxy"
+	"siu/server/store"
 	"strings"
 )
 
@@ -21,17 +21,13 @@ func addProxy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var pws []proxy.ProxyWrapper
-	if err = json.Unmarshal(body, &pws); err != nil {
+	var proxies []string
+	if err = json.Unmarshal(body, &proxies); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	var proxies []proxy.Proxy
-	for _, pw := range pws {
-		proxies = append(proxies, pw.Value)
-	}
 
-	if err = proxy.AddProxies(proxies...); err != nil {
+	if err = store.AddProxies(proxies...); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -49,12 +45,12 @@ func removeProxy(w http.ResponseWriter, r *http.Request) {
 	for _, name := range strings.Split(params, ",") {
 		names = append(names, name)
 	}
-	proxy.RemoveProxies(names...)
+	store.RemoveProxies(names...)
 	w.WriteHeader(http.StatusOK)
 }
 
 func getProxies(w http.ResponseWriter, r *http.Request) {
-	proxies := proxy.GetProxies()
+	proxies := store.GetProxies()
 	data, err := json.Marshal(proxies)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

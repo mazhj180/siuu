@@ -24,6 +24,7 @@ func init() {
 	sl := sysViper.GetString("log.system.level")
 	pl := sysViper.GetString("log.proxy.level")
 	logPath := sysViper.GetString("log.path")
+	logPath = util.ExpandHomePath(logPath)
 	logger.InitSystemLog(path.Dir(logPath)+"/system.log", 10*logger.MB, util.LogLevel(sl))
 	logger.InitProxyLog(path.Dir(logPath)+"/proxy.log", 1*logger.MB, util.LogLevel(pl))
 

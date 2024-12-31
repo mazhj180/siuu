@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"siu/server/store"
+	"siuu/server/store"
 	"strings"
 )
 

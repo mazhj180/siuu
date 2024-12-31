@@ -4,11 +4,11 @@ import (
 	"os"
 	"os/signal"
 	"path"
-	"siu/logger"
-	"siu/routing"
-	"siu/server"
-	"siu/server/store"
-	"siu/util"
+	"siuu/logger"
+	"siuu/routing"
+	"siuu/server"
+	"siuu/server/store"
+	"siuu/util"
 )
 
 var (

@@ -1,7 +1,7 @@
 package tunnel
 
 import (
-	"siu/tunnel/proto"
+	"siuu/tunnel/proto"
 )
 
 var (

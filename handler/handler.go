@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"siu/session"
-	"siu/tunnel/proxy"
+	"siuu/session"
+	"siuu/tunnel/proxy"
 )
 
 var (

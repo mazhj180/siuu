@@ -1,9 +1,9 @@
 package tunnel
 
 import (
-	"siu/logger"
-	"siu/tunnel/proto"
-	"siu/tunnel/proxy"
+	"siuu/logger"
+	"siuu/tunnel/proto"
+	"siuu/tunnel/proxy"
 )
 
 func dispatch() {

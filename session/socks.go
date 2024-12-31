@@ -4,9 +4,9 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
-	"siu/server/store"
-	"siu/tunnel/proto"
-	"siu/tunnel/proxy"
+	"siuu/server/store"
+	"siuu/tunnel/proto"
+	"siuu/tunnel/proxy"
 )
 
 type socksSession struct {

@@ -12,7 +12,7 @@ import (
 	"golang.org/x/net/dns/dnsmessage"
 	"net"
 	"net/http"
-	proxy2 "siu/tunnel/proxy"
+	proxy2 "siuu/tunnel/proxy"
 	"strconv"
 	"testing"
 )

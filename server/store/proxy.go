@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/spf13/viper"
 	"maps"
-	"siu/tunnel/proxy"
+	"siuu/tunnel/proxy"
 	"strconv"
 	"strings"
 	"sync"

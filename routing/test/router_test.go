@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/lionsoul2014/ip2region/binding/golang/xdb"
 	"net"
-	"siu/util"
+	"siuu/util"
 	"testing"
 )
 

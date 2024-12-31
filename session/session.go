@@ -3,8 +3,8 @@ package session
 import (
 	"fmt"
 	"net"
-	"siu/tunnel/proto"
-	"siu/tunnel/proxy"
+	"siuu/tunnel/proto"
+	"siuu/tunnel/proxy"
 	"sync/atomic"
 )
 

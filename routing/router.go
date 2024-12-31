@@ -2,7 +2,7 @@ package routing
 
 import (
 	"fmt"
-	"siu/tunnel/proxy"
+	"siuu/tunnel/proxy"
 	"sync"
 )
 

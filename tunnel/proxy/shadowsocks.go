@@ -6,7 +6,7 @@ import (
 	"github.com/shadowsocks/go-shadowsocks2/core"
 	"io"
 	"net"
-	"siu/logger"
+	"siuu/logger"
 	"strconv"
 )
 

@@ -1,4 +1,4 @@
-module siu
+module siuu
 
 go 1.23.0
 

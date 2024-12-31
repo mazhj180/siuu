@@ -3,9 +3,9 @@ package test
 import (
 	"encoding/json"
 	"fmt"
-	"siu/server/store"
-	"siu/tunnel/proxy"
-	"siu/util"
+	"siuu/server/store"
+	"siuu/tunnel/proxy"
+	"siuu/util"
 	"testing"
 )
 

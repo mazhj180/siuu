@@ -2,7 +2,7 @@ package util
 
 import (
 	"fmt"
-	"siu/logger"
+	"siuu/logger"
 	"strings"
 )
 

@@ -2,7 +2,7 @@ package test
 
 import (
 	"fmt"
-	"siu/util"
+	"siuu/util"
 	"testing"
 )
 

@@ -2,7 +2,7 @@ package proto
 
 import (
 	"net"
-	"siu/tunnel/proxy"
+	"siuu/tunnel/proxy"
 )
 
 const (

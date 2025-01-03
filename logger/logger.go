@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 	"time"
 )
 
@@ -175,6 +176,22 @@ func Close() {
 func timePrefix() string {
 	t := time.Now()
 	return t.Format("2006-01-02 15:04:05")
+}
+
+func LogLevel(level string) Level {
+	level = strings.ToUpper(level)
+	switch level {
+	case "DEBUG":
+		return DebugLevel
+	case "INFO":
+		return InfoLevel
+	case "WARN":
+		return WarnLevel
+	case "ERROR":
+		return ErrorLevel
+	default:
+		panic(fmt.Sprintf("invalid log level: %s", level))
+	}
 }
 
 func PDebug(format string, v ...any) {

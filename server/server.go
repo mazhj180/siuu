@@ -2,15 +2,40 @@ package server
 
 import (
 	"fmt"
+	"github.com/kardianos/service"
+	"log"
 	"net"
 	"net/http"
+	"os"
 	"siuu/handler"
 	"siuu/logger"
+	"siuu/server/config"
 	"siuu/server/handle"
 	"siuu/session"
 )
 
-func StartServer(port uint16) {
+type Server struct{}
+
+func (s *Server) Start(_ service.Service) error {
+	_, _ = os.Stdout.WriteString("[program] Starting...\n")
+	log.Printf("adasdawdaw\n")
+	var serverPort, httpPort, socksPort uint16
+	config.InitConfig(&serverPort, &httpPort, &socksPort)
+	log.Printf("serverPort: %d, httpPort: %d, socksPort: %d\n", serverPort, httpPort, socksPort)
+
+	go startServer(serverPort)
+	go startHttpProxyServer(httpPort)
+	go startSocksProxyServer(socksPort)
+
+	return nil
+}
+
+func (s *Server) Stop(_ service.Service) error {
+	log.Println("[program] Stopping... (clean up resources)")
+	return nil
+}
+
+func startServer(port uint16) {
 	mux := http.NewServeMux()
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), mux); err != nil {
 		panic(fmt.Sprintf("hub server start error: %s", err))
@@ -20,7 +45,7 @@ func StartServer(port uint16) {
 
 }
 
-func StartHttpProxyServer(port uint16) {
+func startHttpProxyServer(port uint16) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		panic(fmt.Sprintf("http proxy server start error: %s", err))
@@ -36,7 +61,7 @@ func StartHttpProxyServer(port uint16) {
 	}
 }
 
-func StartSocksProxyServer(port uint16) {
+func startSocksProxyServer(port uint16) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		panic(fmt.Errorf("socks proxy server start error: %s", err))

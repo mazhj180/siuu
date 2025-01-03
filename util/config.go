@@ -20,7 +20,7 @@ func concurrentPath() string {
 }
 
 func executePath() string {
-	filename := GetHomeDir() + "/.siu/conf/"
+	filename := "/Users/mazhj/.siuu/conf/"
 	dir := path.Dir(filename)
 	if _, err := os.Stat(dir); err != nil && os.IsNotExist(err) {
 		if err = os.MkdirAll(dir, os.ModePerm); err != nil {

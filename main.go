@@ -1,62 +1,52 @@
 package main
 
 import (
+	"fmt"
+	"github.com/kardianos/service"
+	"log"
 	"os"
-	"os/signal"
-	"path"
-	"siuu/logger"
-	"siuu/routing"
 	"siuu/server"
-	"siuu/server/store"
-	"siuu/util"
 )
-
-var (
-	serverPort uint16
-	httpPort   uint16
-	socksPort  uint16
-)
-
-func init() {
-
-	_, _ = os.Stdout.WriteString("initialize configuration ....\n")
-	sysViper := util.CreateConfig("conf", "toml")
-	sl := sysViper.GetString("log.system.level")
-	pl := sysViper.GetString("log.proxy.level")
-	logPath := sysViper.GetString("log.path")
-	logPath = util.ExpandHomePath(logPath)
-	logger.InitSystemLog(path.Dir(logPath)+"/system.log", 10*logger.MB, util.LogLevel(sl))
-	logger.InitProxyLog(path.Dir(logPath)+"/proxy.log", 1*logger.MB, util.LogLevel(pl))
-
-	serverPort = sysViper.GetUint16("server.port")
-	httpPort = sysViper.GetUint16("server.proxy.http.port")
-	socksPort = sysViper.GetUint16("server.proxy.socks.port")
-
-	prxPath := sysViper.GetString("proxy.path")
-	prxPath = util.ExpandHomePath(prxPath)
-	store.InitProxy(prxPath)
-	_, _ = os.Stdout.WriteString("load proxy\n")
-
-	if sysViper.GetBool("router.enable") {
-		routePath := sysViper.GetString("router.route.path")
-		routePath = util.ExpandHomePath(routePath)
-
-		xdbPath := sysViper.GetString("router.xdb.path")
-		xdbPath = util.ExpandHomePath(xdbPath)
-		routing.InitRouter(routePath, xdbPath)
-		_, _ = os.Stdout.WriteString("load router\n")
-	}
-	_, _ = os.Stdout.WriteString("siu welcomes you\n")
-
-}
 
 func main() {
 
-	go server.StartServer(serverPort)
-	go server.StartHttpProxyServer(httpPort)
-	go server.StartSocksProxyServer(socksPort)
+	fmt.Println("starting siuu ...")
 
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, os.Interrupt)
-	_ = <-sigCh
+	conf := &service.Config{
+		Name:        "siuu",
+		DisplayName: "siuu CrossPlatform Daemon",
+		Description: "siuu is a CrossPlatform Daemon",
+		//Option: map[string]interface{}{
+		//	//"UserService": true,
+		//	"KeepAlive":   false,
+		//	"LogOutput":   "/Users/mazhj/siuu.log",
+		//},
+	}
+
+	s, err := service.New(&server.Server{}, conf)
+	if err != nil {
+		log.Println("service.New error: ", err)
+		panic(err)
+	}
+
+	// install/uninstall/start/stop/restart
+	if len(os.Args) > 1 {
+
+		cmd := os.Args[1]
+		fmt.Println(cmd)
+		err = service.Control(s, cmd)
+		if err != nil {
+			log.Fatalf("Failed to %s: %v\n", cmd, err)
+		}
+		return
+	}
+
+	fmt.Printf("Starting service...\n")
+	// 阻塞，等待信号
+	if err = s.Run(); err != nil {
+		log.Fatal(err)
+	}
+	//_, _ = os.Stdout.WriteString("Usage: siuu [install | uninstall | start | stop | restart]\n")
+	//os.Exit(0)
+
 }

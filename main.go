@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/kardianos/service"
 	"log"
 	"os"
@@ -9,8 +8,6 @@ import (
 )
 
 func main() {
-
-	fmt.Println("starting siuu ...")
 
 	conf := &service.Config{
 		Name:        "siuu",
@@ -25,15 +22,12 @@ func main() {
 
 	s, err := service.New(&server.Server{}, conf)
 	if err != nil {
-		log.Println("service.New error: ", err)
 		panic(err)
 	}
 
 	// install/uninstall/start/stop/restart
 	if len(os.Args) > 1 {
-
 		cmd := os.Args[1]
-		fmt.Println(cmd)
 		err = service.Control(s, cmd)
 		if err != nil {
 			log.Fatalf("Failed to %s: %v\n", cmd, err)

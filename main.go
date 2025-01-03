@@ -41,12 +41,8 @@ func main() {
 		return
 	}
 
-	fmt.Printf("Starting service...\n")
-	// 阻塞，等待信号
 	if err = s.Run(); err != nil {
 		log.Fatal(err)
 	}
-	//_, _ = os.Stdout.WriteString("Usage: siuu [install | uninstall | start | stop | restart]\n")
-	//os.Exit(0)
 
 }

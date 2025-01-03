@@ -6,7 +6,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"os"
 	"siuu/handler"
 	"siuu/logger"
 	"siuu/server/config"
@@ -17,11 +16,9 @@ import (
 type Server struct{}
 
 func (s *Server) Start(_ service.Service) error {
-	_, _ = os.Stdout.WriteString("[program] Starting...\n")
-	log.Printf("adasdawdaw\n")
+
 	var serverPort, httpPort, socksPort uint16
 	config.InitConfig(&serverPort, &httpPort, &socksPort)
-	log.Printf("serverPort: %d, httpPort: %d, socksPort: %d\n", serverPort, httpPort, socksPort)
 
 	go startServer(serverPort)
 	go startHttpProxyServer(httpPort)

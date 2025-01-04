@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"siuu/server/config"
+	"strings"
 )
 
 var (
@@ -71,6 +72,7 @@ func proxy(cmd *cobra.Command, args []string) {
 func turnOn(cmd *cobra.Command, args []string) {
 
 	prxHost := "127.0.0.1"
+	passDomains := []string{"192.168.0.0/16", "10.0.0.0/8", "172.16.0.0/12", "127.0.0.1", "localhost", "\\*.local", "timestamp.apple.com"}
 
 	httpPort := config.Get[int64](config.ProxyHttpPort)
 	socksPort := config.Get[int64](config.ProxySocksPort)
@@ -85,6 +87,8 @@ func turnOn(cmd *cobra.Command, args []string) {
 		c4 := exec.Command("networksetup", "-setwebproxystate", network, "on")
 		c5 := exec.Command("networksetup", "-setsecurewebproxystate", network, "on")
 		c6 := exec.Command("networksetup", "-setsocksfirewallproxystate", network, "on")
+
+		c7 := exec.Command("networksetup", "-setproxybypassdomains", network, strings.Join(passDomains, " "))
 
 		if err := c1.Run(); err != nil {
 			_, _ = os.Stdout.WriteString(err.Error())
@@ -108,6 +112,10 @@ func turnOn(cmd *cobra.Command, args []string) {
 			os.Exit(1)
 		}
 		if err := c6.Run(); err != nil {
+			_, _ = os.Stdout.WriteString(err.Error())
+			os.Exit(1)
+		}
+		if err := c7.Run(); err != nil {
 			_, _ = os.Stdout.WriteString(err.Error())
 			os.Exit(1)
 		}

@@ -23,10 +23,12 @@ const (
 	RouteConfigPath       = "router.path.table"
 	RouteXdbPath          = "router.path.xdb"
 	ProxiesConfigPath     = "proxy.path"
-	RootPath              = "root.path"
 )
 
-var Platform PlatformKind
+var (
+	RootPath = util.AppRootPath
+	Platform PlatformKind
+)
 
 type PlatformKind byte
 

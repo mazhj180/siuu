@@ -9,9 +9,9 @@
 ## About
 - it implemented http/https, socks5, shadowsocks and trojan proxies now. 
 - you can implement any proxy protocols and routers you want.
-- it can run as a user-level daemon, and you can use it by cli tool.
-- the cli tool is doing now
+- it can run as a user-level daemon, and you can use it by cli tool; the cli tool is doing now.
 - siuu currently meets my basic needs, and subsequent improvements will be made gradually.
+- You can use this program anywhere without any conditions, and if you are interested, you can contribute your code. 
 
 ## Install
 the best version of golang is 1.23.0 

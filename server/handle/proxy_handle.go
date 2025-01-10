@@ -12,6 +12,7 @@ func RegisterProxyHandle(mux *http.ServeMux, prefix string) {
 	mux.HandleFunc(prefix+"/add", addProxy)
 	mux.HandleFunc(prefix+"/remove", removeProxy)
 	mux.HandleFunc(prefix+"/get", getProxies)
+	mux.HandleFunc(prefix+"/set", setDefaultProxy)
 }
 
 func addProxy(w http.ResponseWriter, r *http.Request) {
@@ -63,4 +64,20 @@ func getProxies(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 
+}
+
+func setDefaultProxy(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	if !query.Has("proxy") {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	err := store.SetSelectedProxy(query.Get("proxy"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(err.Error()))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

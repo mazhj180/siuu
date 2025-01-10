@@ -42,3 +42,14 @@ func CloseRouter() {
 	defer rwx.Unlock()
 	router = nil
 }
+
+func Refresh(routePath, xdbPath string) error {
+	r, err := NewDefaultRouter(routePath, xdbPath)
+	if err != nil {
+		return err
+	}
+	rwx.Lock()
+	defer rwx.Unlock()
+	router = r
+	return nil
+}

@@ -35,6 +35,7 @@ func (s *Server) Stop(_ service.Service) error {
 func startServer(port uint16) {
 	mux := http.NewServeMux()
 	handle.RegisterProxyHandle(mux, "/prx")
+	handle.RegisterRouterHandle(mux, "/route")
 
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), mux); err != nil {
 		panic(fmt.Sprintf("hub server start error: %s", err))

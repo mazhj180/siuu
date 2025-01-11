@@ -31,3 +31,8 @@ type Interface interface {
 type HttpInterface interface {
 	IsTLS() bool
 }
+
+type TrafficRecorder interface {
+	RecordUp(int64, float64)
+	RecordDown(int64, float64)
+}

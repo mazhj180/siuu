@@ -2,6 +2,7 @@ package tunnel
 
 import (
 	"siuu/logger"
+	"siuu/tunnel/monitor"
 	"siuu/tunnel/proto"
 	"siuu/tunnel/proxy"
 )
@@ -27,7 +28,7 @@ func do(p proto.Interface) {
 	}
 	client := &proxy.Client{
 		Sid:   sid,
-		Conn:  conn,
+		Conn:  monitor.Watch(conn),
 		Host:  host,
 		Port:  port,
 		IsTLS: isTLS,
@@ -47,6 +48,21 @@ func do(p proto.Interface) {
 		logger.PError("<%s> the req of [%s:%d] was wrong using by [%s] ", sid, host, port, prx.GetName())
 
 	} else {
-		logger.PInfo("<%s> send to [%s:%d] using by [%s] ", sid, host, port, prx.GetName())
+		m := client.Conn.(monitor.Interface)
+		up, upSpeed := m.UpTraffic()
+		down, downSpeed := m.DownTraffic()
+
+		var rt proto.TrafficRecorder
+		if rt, ok = p.(proto.TrafficRecorder); ok {
+			rt.RecordUp(up, upSpeed)
+			rt.RecordDown(down, downSpeed)
+		}
+
+		logger.PInfo("<%s> send to [%s:%d] using by [%s]  [up:%d B | %.2f KB/s] [down:%d B | %.2f KB/s] ",
+			sid,
+			host,
+			port,
+			prx.GetName(),
+			up, upSpeed/1024, down, downSpeed/1024)
 	}
 }

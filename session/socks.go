@@ -10,10 +10,12 @@ import (
 )
 
 type socksSession struct {
-	id   string
-	conn net.Conn
-	prx  proxy.Proxy
-	addr *Addr
+	id                 string
+	conn               net.Conn
+	prx                proxy.Proxy
+	addr               *Addr
+	up, down           int64
+	upSpeed, downSpeed float64
 }
 
 func OpenSocksSession(conn net.Conn) Session {
@@ -139,4 +141,13 @@ func (s *socksSession) GetConn() net.Conn {
 
 func (s *socksSession) GetProtocol() proto.Protocol {
 	return proto.SOCKS
+}
+func (s *socksSession) RecordUp(up int64, speed float64) {
+	s.up = up
+	s.upSpeed = speed
+}
+
+func (s *socksSession) RecordDown(down int64, speed float64) {
+	s.down = down
+	s.downSpeed = speed
 }

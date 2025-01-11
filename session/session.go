@@ -11,6 +11,7 @@ import (
 type Session interface {
 	fmt.Stringer
 	proto.Interface
+	proto.TrafficRecorder
 	ID() string
 	Handshakes() error
 	SetProxy(proxy proxy.Proxy)

@@ -5,13 +5,8 @@ import (
 	"fmt"
 	"siuu/server/store"
 	"siuu/tunnel/proxy"
-	"siuu/util"
 	"testing"
 )
-
-func init() {
-	v := util.CreateConfig("conf", "toml")
-}
 
 func TestAddPrx(t *testing.T) {
 
@@ -30,8 +25,6 @@ func TestAddPrx(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-
-	_ = store.AddProxies(&tp)
 
 	for _, v := range store.GetProxies() {
 		fmt.Println(v)

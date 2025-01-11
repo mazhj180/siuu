@@ -13,11 +13,13 @@ import (
 )
 
 type httpSession struct {
-	prx   proxy.Proxy
-	conn  net.Conn
-	isTLS bool
-	addr  *Addr
-	id    string
+	prx                proxy.Proxy
+	conn               net.Conn
+	isTLS              bool
+	addr               *Addr
+	id                 string
+	up, down           int64
+	upSpeed, downSpeed float64
 }
 
 func OpenHttpSession(conn net.Conn) Session {
@@ -95,4 +97,14 @@ func (s *httpSession) SetProxy(p proxy.Proxy) {
 
 func (s *httpSession) IsTLS() bool {
 	return s.isTLS
+}
+
+func (s *httpSession) RecordUp(up int64, speed float64) {
+	s.up = up
+	s.upSpeed = speed
+}
+
+func (s *httpSession) RecordDown(down int64, speed float64) {
+	s.down = down
+	s.downSpeed = speed
 }

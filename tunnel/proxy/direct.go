@@ -51,6 +51,11 @@ func (d *DirectProxy) actOfTcp(client *Client) error {
 		return err
 	}
 
+	if client.OtherData != nil {
+		if _, err = agency.Write(client.OtherData); err != nil {
+			return err
+		}
+	}
 	go func() {
 		if _, e := io.Copy(agency, conn); e != nil {
 			logger.SWarn("<%s> %s", client.Sid, e)

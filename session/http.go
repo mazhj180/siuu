@@ -2,6 +2,7 @@ package session
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"net"
 	"net/http"
@@ -18,6 +19,7 @@ type httpSession struct {
 	isTLS              bool
 	addr               *Addr
 	id                 string
+	buf                []byte
 	up, down           int64
 	upSpeed, downSpeed float64
 }
@@ -56,6 +58,16 @@ func (s *httpSession) Handshakes() error {
 		if _, err = s.conn.Write([]byte(fmt.Sprintf("%s 200 Connection Established\r\n\r\n", req.Proto))); err != nil {
 			return err
 		}
+	} else {
+		var buf bytes.Buffer
+		_, _ = fmt.Fprintf(&buf, "%s %s %s\r\n", req.Method, req.URL.RequestURI(), req.Proto)
+		for k, v := range req.Header {
+			for _, val := range v {
+				_, _ = fmt.Fprintf(&buf, "%s: %s\r\n", k, val)
+			}
+		}
+		_, _ = fmt.Fprintf(&buf, "\r\n")
+		s.buf = buf.Bytes()
 	}
 	return nil
 }
@@ -97,6 +109,10 @@ func (s *httpSession) SetProxy(p proxy.Proxy) {
 
 func (s *httpSession) IsTLS() bool {
 	return s.isTLS
+}
+
+func (s *httpSession) GetOtherData() []byte {
+	return s.buf
 }
 
 func (s *httpSession) RecordUp(up int64, speed float64) {

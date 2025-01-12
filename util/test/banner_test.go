@@ -12,7 +12,6 @@ import (
 	"testing"
 )
 
-//go:embed ronaldo.txt
 var images []byte
 
 func TestAscii(t *testing.T) {

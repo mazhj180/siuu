@@ -5,14 +5,15 @@ import (
 	"log"
 	"os"
 	"siuu/server"
-	"siuu/server/config"
+	"siuu/server/config/constant"
+	"siuu/util"
 )
 
 // run as a daemon service usage : ./siuu install &&./siuu start
 // run as a normal program usage : ./siuu
 func main() {
 
-	p := config.Get[string](config.LogDirPath + "/siuu.log")
+	p := util.GetConfig[string](constant.LogDirPath + "/siuu.log")
 
 	// build service config
 	conf := &service.Config{

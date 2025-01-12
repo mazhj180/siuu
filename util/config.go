@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/viper"
 	"os"
 	"path"
+	"reflect"
 	"runtime"
 )
 
@@ -49,4 +50,49 @@ func CreateConfig(file string, fileType string) *viper.Viper {
 	}
 
 	return config
+}
+
+func SetConfig(key string, value any) error {
+	v := CreateConfig("conf", "toml")
+	v.Set(key, value)
+
+	if err := v.WriteConfig(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetConfig[T ~int64 | ~string | ~bool | ~[]int64 | ~[]string](key string) T {
+	var zero T
+	v := CreateConfig("conf", "toml")
+	if v.Get(key) == nil {
+		return zero
+	}
+	return v.Get(key).(T)
+}
+
+func GetSettings() []string {
+	var res []string
+	v := CreateConfig("conf", "toml")
+	settings := v.AllSettings()
+	var dfs func(any, string)
+	dfs = func(s any, str string) {
+		if reflect.TypeOf(s).Kind() != reflect.Map {
+			str += fmt.Sprintf("=%v", s)
+			res = append(res, str)
+			return
+		}
+
+		for k, value := range s.(map[string]any) {
+			var c string
+			if str == "" {
+				c = k
+			} else {
+				c = str + "." + k
+			}
+			dfs(value, c)
+		}
+	}
+	dfs(settings, "")
+	return res
 }

@@ -54,8 +54,10 @@ func CreateConfig(file string, fileType string) *viper.Viper {
 
 func SetConfig(key string, value any) error {
 	v := CreateConfig("conf", "toml")
+	if !v.IsSet(key) {
+		return fmt.Errorf("key %s is not set", key)
+	}
 	v.Set(key, value)
-
 	if err := v.WriteConfig(); err != nil {
 		return err
 	}

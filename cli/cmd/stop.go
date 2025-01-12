@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"siuu/server/config"
+	"siuu/server/config/constant"
 )
 
 var stopCmd = &cobra.Command{
@@ -16,10 +16,10 @@ var stopCmd = &cobra.Command{
 func stop(cmd *cobra.Command, args []string) {
 
 	var c *exec.Cmd
-	if config.Platform == config.Windows {
-		c = exec.Command(path.Join(config.RootPath, "siuu.exe"), "stop")
+	if constant.Platform == constant.Windows {
+		c = exec.Command(path.Join(constant.RootPath, "siuu.exe"), "stop")
 	} else {
-		c = exec.Command(path.Join(config.RootPath, "siuu"), "stop")
+		c = exec.Command(path.Join(constant.RootPath, "siuu"), "stop")
 	}
 	output, err := c.CombinedOutput()
 	if err != nil {

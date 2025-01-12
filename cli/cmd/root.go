@@ -6,6 +6,11 @@ import (
 	_ "embed"
 	"github.com/spf13/cobra"
 	"os"
+	"siuu/cli/platform"
+	"siuu/cli/platform/darwin"
+	"siuu/cli/platform/linux"
+	"siuu/cli/platform/win"
+	"siuu/server/config/constant"
 )
 
 var (
@@ -18,11 +23,25 @@ var (
 		Short: "cli for siuu",
 		Run:   root,
 	}
+
+	cli platform.Client
 )
 
 func init() {
+
+	switch constant.Platform {
+	case constant.Darwin:
+		cli = &darwin.Cli{}
+	case constant.Linux:
+		cli = &linux.Cli{}
+	case constant.Windows:
+		cli = &win.Cli{}
+	default:
+		panic("unknown platform")
+	}
+
 	RootCmd.Flags().BoolVarP(&showVersion, "version", "v", false, "show version information")
-	RootCmd.AddCommand(startCmd, stopCmd, configCmd, proxyCmd)
+	RootCmd.AddCommand(startCmd, stopCmd, configCmd, proxyCmd, logCmd)
 }
 
 func root(cmd *cobra.Command, args []string) {

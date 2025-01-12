@@ -3,7 +3,7 @@ package handle
 import (
 	"net/http"
 	"siuu/routing"
-	"siuu/server/config"
+	"siuu/server/config/constant"
 	"siuu/util"
 )
 
@@ -12,9 +12,9 @@ func RegisterRouterHandle(mux *http.ServeMux, prefix string) {
 }
 
 func refreshRouter(w http.ResponseWriter, r *http.Request) {
-	routePath := config.Get[string](config.RouteConfigPath)
+	routePath := util.GetConfig[string](constant.RouteConfigPath)
 	routePath = util.ExpandHomePath(routePath)
-	xdbPath := config.Get[string](config.RouteXdbPath)
+	xdbPath := util.GetConfig[string](constant.RouteXdbPath)
 	xdbPath = util.ExpandHomePath(xdbPath)
 	if err := routing.Refresh(routePath, xdbPath); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

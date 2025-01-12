@@ -6,6 +6,10 @@ import (
 	"github.com/spf13/viper"
 	"maps"
 	"siuu/tunnel/proxy"
+	"siuu/tunnel/proxy/http"
+	"siuu/tunnel/proxy/shadow"
+	"siuu/tunnel/proxy/socks"
+	"siuu/tunnel/proxy/torjan"
 	"strconv"
 	"strings"
 	"sync"
@@ -57,7 +61,7 @@ func AddProxies(proxies ...string) error {
 		var prx proxy.Proxy
 		switch val[0] {
 		case proxy.HTTPS.String(), "http":
-			prx = &proxy.HttpProxy{
+			prx = &http.HttpProxy{
 				Type:     proxy.HTTPS,
 				Name:     val[1],
 				Server:   val[2],
@@ -65,7 +69,7 @@ func AddProxies(proxies ...string) error {
 				Protocol: protocol,
 			}
 		case proxy.SOCKS.String():
-			prx = &proxy.SocksProxy{
+			prx = &socks.SocksProxy{
 				Type:     proxy.SOCKS,
 				Name:     val[1],
 				Server:   val[2],
@@ -75,7 +79,7 @@ func AddProxies(proxies ...string) error {
 				Protocol: protocol,
 			}
 		case proxy.SHADOW.String():
-			prx = &proxy.ShadowSocksProxy{
+			prx = &shadow.ShadowSocksProxy{
 				Type:     proxy.SHADOW,
 				Name:     val[1],
 				Server:   val[2],
@@ -85,7 +89,7 @@ func AddProxies(proxies ...string) error {
 				Protocol: protocol,
 			}
 		case proxy.TROJAN.String():
-			prx = &proxy.TrojanProxy{
+			prx = &torjan.TrojanProxy{
 				Type:     proxy.TROJAN,
 				Name:     val[1],
 				Server:   val[2],

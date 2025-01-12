@@ -1,4 +1,4 @@
-package proxy
+package torjan
 
 import (
 	"bytes"
@@ -10,29 +10,30 @@ import (
 	"io"
 	"net"
 	"siuu/logger"
+	"siuu/tunnel/proxy"
 	"strconv"
 )
 
 type TrojanProxy struct {
-	Type     Type
+	Type     proxy.Type
 	Name     string
 	Server   string
 	Port     uint16
 	Password string
-	Protocol Protocol
+	Protocol proxy.Protocol
 	Sni      string
 }
 
-func (t *TrojanProxy) Act(client *Client) error {
-	if t.Protocol == TCP {
+func (t *TrojanProxy) Act(client *proxy.Client) error {
+	if t.Protocol == proxy.TCP {
 		return t.actOfTcp(client)
-	} else if t.Protocol == UDP {
-		return ErrProtocolNotSupported
+	} else if t.Protocol == proxy.UDP {
+		return proxy.ErrProtocolNotSupported
 	}
 	return nil
 }
 
-func (t *TrojanProxy) actOfTcp(client *Client) error {
+func (t *TrojanProxy) actOfTcp(client *proxy.Client) error {
 	conn := client.Conn
 	defer conn.Close()
 
@@ -113,7 +114,7 @@ func (t *TrojanProxy) GetName() string {
 	return t.Name
 }
 
-func (t *TrojanProxy) GetType() Type {
+func (t *TrojanProxy) GetType() proxy.Type {
 	return t.Type
 }
 
@@ -125,6 +126,6 @@ func (t *TrojanProxy) GetPort() uint16 {
 	return t.Port
 }
 
-func (t *TrojanProxy) GetProtocol() Protocol {
+func (t *TrojanProxy) GetProtocol() proxy.Protocol {
 	return t.Protocol
 }

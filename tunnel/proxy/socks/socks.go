@@ -1,4 +1,4 @@
-package proxy
+package socks
 
 import (
 	"encoding/binary"
@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"siuu/logger"
+	"siuu/tunnel/proxy"
 	"strconv"
 )
 
@@ -14,13 +15,13 @@ var ErrSocksVerNotSupported = errors.New("socks version not supported")
 var ErrSocksAuthentication = errors.New("socks auth was fail or not support the way ")
 
 type SocksProxy struct {
-	Type     Type
+	Type     proxy.Type
 	Name     string
 	Server   string
 	Port     uint16
 	Username string
 	Password string
-	Protocol Protocol
+	Protocol proxy.Protocol
 }
 
 func (s *SocksProxy) String() string {
@@ -31,16 +32,16 @@ func (s *SocksProxy) String() string {
 	return string(jbytes)
 }
 
-func (s *SocksProxy) Act(client *Client) error {
+func (s *SocksProxy) Act(client *proxy.Client) error {
 
-	if s.Protocol == TCP {
+	if s.Protocol == proxy.TCP {
 		return s.actOfTcp(client)
 	}
 
-	return ErrProtocolNotSupported
+	return proxy.ErrProtocolNotSupported
 }
 
-func (s *SocksProxy) actOfTcp(client *Client) error {
+func (s *SocksProxy) actOfTcp(client *proxy.Client) error {
 
 	conn := client.Conn
 	defer conn.Close()
@@ -163,7 +164,7 @@ func (s *SocksProxy) actOfTcp(client *Client) error {
 		addrLen = 16
 
 	default:
-		return ErrProxyResp
+		return proxy.ErrProxyResp
 	}
 
 	bnd := make([]byte, addrLen+2)
@@ -173,7 +174,7 @@ func (s *SocksProxy) actOfTcp(client *Client) error {
 
 	// According to rep, judge whether the upstream connection is successful
 	if rep != 0x00 {
-		return ErrProxyResp
+		return proxy.ErrProxyResp
 	}
 
 	go func() {
@@ -193,7 +194,7 @@ func (s *SocksProxy) GetName() string {
 	return s.Name
 }
 
-func (s *SocksProxy) GetType() Type {
+func (s *SocksProxy) GetType() proxy.Type {
 	return s.Type
 }
 
@@ -205,6 +206,6 @@ func (s *SocksProxy) GetPort() uint16 {
 	return s.Port
 }
 
-func (s *SocksProxy) GetProtocol() Protocol {
+func (s *SocksProxy) GetProtocol() proxy.Protocol {
 	return s.Protocol
 }

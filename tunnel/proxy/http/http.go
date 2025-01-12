@@ -1,36 +1,37 @@
-package proxy
+package http
 
 import (
 	"fmt"
 	"io"
 	"net"
 	"siuu/logger"
+	"siuu/tunnel/proxy"
 	"strconv"
 	"strings"
 )
 
 type HttpProxy struct {
-	Type     Type
+	Type     proxy.Type
 	Name     string
 	Server   string
 	Port     uint16
-	Protocol Protocol
+	Protocol proxy.Protocol
 }
 
-func (h *HttpProxy) Act(client *Client) error {
-	if h.Protocol == TCP {
+func (h *HttpProxy) Act(client *proxy.Client) error {
+	if h.Protocol == proxy.TCP {
 		if err := h.actOfTcp(client); err != nil {
 			return err
 		}
-	} else if h.Protocol == UDP {
+	} else if h.Protocol == proxy.UDP {
 		if err := h.actOfUdp(client); err != nil {
 			return err
 		}
 	}
-	return ErrProtocolNotSupported
+	return proxy.ErrProtocolNotSupported
 }
 
-func (h *HttpProxy) actOfTcp(client *Client) error {
+func (h *HttpProxy) actOfTcp(client *proxy.Client) error {
 
 	conn := client.Conn
 	defer conn.Close()
@@ -63,7 +64,7 @@ func (h *HttpProxy) actOfTcp(client *Client) error {
 		}
 		respStr := string(resp[:n])
 		if !strings.Contains(respStr, "200") {
-			return ErrProxyResp
+			return proxy.ErrProxyResp
 		}
 	}
 
@@ -80,15 +81,15 @@ func (h *HttpProxy) actOfTcp(client *Client) error {
 	return nil
 }
 
-func (h *HttpProxy) actOfUdp(client *Client) error {
-	return ErrProtocolNotSupported
+func (h *HttpProxy) actOfUdp(client *proxy.Client) error {
+	return proxy.ErrProtocolNotSupported
 }
 
 func (h *HttpProxy) GetName() string {
 	return h.Name
 }
 
-func (h *HttpProxy) GetType() Type {
+func (h *HttpProxy) GetType() proxy.Type {
 	return h.Type
 }
 
@@ -100,6 +101,6 @@ func (h *HttpProxy) GetPort() uint16 {
 	return h.Port
 }
 
-func (h *HttpProxy) GetProtocol() Protocol {
+func (h *HttpProxy) GetProtocol() proxy.Protocol {
 	return h.Protocol
 }

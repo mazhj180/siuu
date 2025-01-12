@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"siuu/server/store"
-	"siuu/tunnel/proxy"
+	"siuu/tunnel/proxy/torjan"
 	"testing"
 )
 
@@ -20,7 +20,7 @@ func TestAddPrx(t *testing.T) {
 		"Sni": "sxxasd"
 	}`
 
-	var tp proxy.TrojanProxy
+	var tp torjan.TrojanProxy
 	err := json.Unmarshal([]byte(data), &tp)
 	if err != nil {
 		t.Error(err)

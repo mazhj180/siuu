@@ -1,4 +1,4 @@
-package proxy
+package shadow
 
 import (
 	"encoding/binary"
@@ -7,17 +7,18 @@ import (
 	"io"
 	"net"
 	"siuu/logger"
+	"siuu/tunnel/proxy"
 	"strconv"
 )
 
 type ShadowSocksProxy struct {
-	Type     Type
+	Type     proxy.Type
 	Name     string
 	Server   string
 	Port     uint16
 	Cipher   string
 	Password string
-	Protocol Protocol
+	Protocol proxy.Protocol
 }
 
 func (s *ShadowSocksProxy) String() string {
@@ -28,16 +29,16 @@ func (s *ShadowSocksProxy) String() string {
 	return string(jbytes)
 }
 
-func (s *ShadowSocksProxy) Act(client *Client) error {
+func (s *ShadowSocksProxy) Act(client *proxy.Client) error {
 
-	if s.Protocol == TCP {
+	if s.Protocol == proxy.TCP {
 		return s.actOfTcp(client)
 	}
 
-	return ErrProtocolNotSupported
+	return proxy.ErrProtocolNotSupported
 }
 
-func (s *ShadowSocksProxy) actOfTcp(client *Client) error {
+func (s *ShadowSocksProxy) actOfTcp(client *proxy.Client) error {
 
 	conn := client.Conn
 	defer conn.Close()
@@ -103,7 +104,7 @@ func (s *ShadowSocksProxy) GetName() string {
 	return s.Name
 }
 
-func (s *ShadowSocksProxy) GetType() Type {
+func (s *ShadowSocksProxy) GetType() proxy.Type {
 	return s.Type
 }
 
@@ -115,6 +116,6 @@ func (s *ShadowSocksProxy) GetPort() uint16 {
 	return s.Port
 }
 
-func (s *ShadowSocksProxy) GetProtocol() Protocol {
+func (s *ShadowSocksProxy) GetProtocol() proxy.Protocol {
 	return s.Protocol
 }

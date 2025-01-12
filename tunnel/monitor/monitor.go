@@ -9,6 +9,7 @@ type Interface interface {
 	net.Conn
 	UpTraffic() (int64, float64)
 	DownTraffic() (int64, float64)
+	SpendTime() (float64, float64)
 }
 
 func Watch(conn net.Conn) Interface {
@@ -59,6 +60,12 @@ func (m *monitor) DownTraffic() (int64, float64) {
 	downCost := m.downTimer.cost()
 	speed := down / downCost
 	return m.down, speed
+}
+
+func (m *monitor) SpendTime() (up, down float64) {
+	up = m.upTimer.cost()
+	down = m.downTimer.cost()
+	return
 }
 
 type timer struct {

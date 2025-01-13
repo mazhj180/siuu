@@ -60,12 +60,26 @@ func (s *httpSession) Handshakes() error {
 		}
 	} else {
 		var buf bytes.Buffer
-		_, _ = fmt.Fprintf(&buf, "%s %s %s\r\n", req.Method, req.URL.RequestURI(), req.Proto)
-		for k, v := range req.Header {
-			for _, val := range v {
+		path := req.URL.Path
+		if req.URL.RawQuery != "" {
+			path += "?" + req.URL.RawQuery
+		}
+		_, _ = fmt.Fprintf(&buf, "%s %s %s\r\n", req.Method, path, req.Proto)
+
+		hasHost := false
+		for k, vals := range req.Header {
+			if strings.EqualFold(k, "Host") {
+				hasHost = true
+			}
+			for _, val := range vals {
 				_, _ = fmt.Fprintf(&buf, "%s: %s\r\n", k, val)
 			}
 		}
+
+		if !hasHost && req.Host != "" {
+			_, _ = fmt.Fprintf(&buf, "Host: %s\r\n", req.Host)
+		}
+
 		_, _ = fmt.Fprintf(&buf, "\r\n")
 		s.buf = buf.Bytes()
 	}

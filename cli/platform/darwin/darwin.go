@@ -19,18 +19,22 @@ func (c *Cli) Logg(follow, prx, _ bool, number int) {
 	} else {
 		filePath = dir + "/system.log"
 	}
+
+	cmd := exec.Command("tail", "-n", fmt.Sprintf("%d", number), filePath)
+
 	if follow {
-		if err := exec.Command("tail", "-f -n ", fmt.Sprintf("%d", number), filePath).Run(); err != nil {
-			_, _ = os.Stdout.WriteString(err.Error())
-			os.Exit(1)
-		}
-		os.Exit(0)
+		cmd = exec.Command("tail", "-f", "-n", fmt.Sprintf("%d", number), filePath)
 	}
 
-	if err := exec.Command("tail", "-n ", fmt.Sprintf("%d", number), filePath).Run(); err != nil {
-		_, _ = os.Stdout.WriteString(err.Error())
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	// 执行命令
+	if err := cmd.Run(); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Error running command: %v\n", err)
 		os.Exit(1)
 	}
+
 }
 
 func (c *Cli) ProxyOn() {

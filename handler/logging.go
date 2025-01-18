@@ -7,8 +7,8 @@ import (
 func loggingHandle(ctx *context) {
 	s := ctx.session
 	addr := s.GetConn().RemoteAddr()
-	logger.PDebug("<%s> agent req : [%s] access ", s.ID(), addr)
-	logger.SInfo("<%s> agent req : [%s] access ", s.ID(), addr)
+	logger.PDebug("<%s> client: [%s] arrival", s.ID(), addr)
+	logger.SInfo("<%s> client: [%s] arrival ", s.ID(), addr)
 	ctx.next()
-	logger.SInfo("<%s> req: [%s] is dispatching", s.ID(), addr)
+	logger.SInfo("<%s> client: [%s] is dispatching", s.ID(), addr)
 }

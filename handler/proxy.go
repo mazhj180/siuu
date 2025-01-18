@@ -10,12 +10,12 @@ func proxyHandle(ctx *context) {
 	s := ctx.session
 	err := s.Handshakes()
 	if err != nil {
-		logger.SError("ack proxy resp was failed; err: %s", err)
+		logger.SError("<%s> ack proxy resp was failed; err: %s", s.ID(), err)
 		return
 	}
-	logger.SDebug("<%s> client handshakes with gop server success", s.ID())
+	logger.SDebug("<%s> client: handshakes successfully with siuu server", s.ID())
 	host := s.GetHost()
-	logger.SDebug("<%s> client dst addr was [%s]", s.ID(), host)
+	logger.SDebug("<%s> dst addr was [%s]", s.ID(), host)
 
 	r := routing.R()
 	if r != nil {

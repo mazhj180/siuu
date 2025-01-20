@@ -1,7 +1,6 @@
 package config
 
 import (
-	"os"
 	"path"
 	"siuu/logger"
 	"siuu/routing"
@@ -23,7 +22,6 @@ func InitConfig(p1, p2, p3 *uint16) {
 	logPath = util.ExpandHomePath(logPath)
 	logger.InitSystemLog(path.Dir(logPath)+"/system.log", 10*logger.MB, logger.LogLevel(v.GetString(constant.SystemLogLevel)))
 	logger.InitProxyLog(path.Dir(logPath)+"/proxy.log", 1*logger.MB, logger.LogLevel(v.GetString(constant.ProxyLogLevel)))
-	_, _ = os.Stdout.WriteString("init config" + logPath + "\n")
 
 	// proxy
 	prxPath := v.GetString(constant.ProxiesConfigPath)

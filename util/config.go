@@ -4,10 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"github.com/spf13/viper"
+	"io"
+	"net/http"
 	"os"
 	"path"
 	"reflect"
 	"runtime"
+	"strings"
 )
 
 var (
@@ -97,4 +100,85 @@ func GetSettings() []string {
 	}
 	dfs(settings, "")
 	return res
+}
+
+func BuildConfiguration(root string) error {
+
+	if err := os.MkdirAll(root+"/conf", os.ModePerm); err != nil {
+		return err
+	}
+
+	file, err := os.OpenFile(root+"/conf/conf.toml", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0666)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	var builder strings.Builder
+
+	builder.WriteString("[log]\n")
+	builder.WriteString(fmt.Sprintf("path = '%s'\n", root+"/log/"))
+	builder.WriteString("level.system = 'DEBUG'\n")
+	builder.WriteString("level.proxy = 'INFO'\n\n")
+
+	builder.WriteString("[proxy]\n")
+	builder.WriteString(fmt.Sprintf("path = '%s'\n", root+"/conf/pr.toml"))
+
+	builder.WriteString("[router]\n")
+	builder.WriteString("enable = true\n\n")
+
+	builder.WriteString("[router.path]\n")
+	builder.WriteString(fmt.Sprintf("table = '%s'\n", root+"/conf/pr.toml"))
+	builder.WriteString(fmt.Sprintf("xdb = '%s'\n", root+"/conf/ip2region.xdb"))
+
+	builder.WriteString("[server]\n")
+	builder.WriteString(fmt.Sprintf("port = %d\n", 17777))
+	builder.WriteString("[server.http]\n")
+	builder.WriteString(fmt.Sprintf("port = %d\n", 18888))
+	builder.WriteString("[server.socks]\n")
+	builder.WriteString(fmt.Sprintf("port = %d\n", 19999))
+
+	_, err = file.WriteString(builder.String())
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func DownloadIp2Region(dir string) error {
+	filePath := dir + "/ip2region.xdb"
+
+	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+		return err
+	}
+
+	if _, err := os.Stat(filePath); !os.IsNotExist(err) {
+		return nil
+	}
+
+	url := "https://github.com/lionsoul2014/ip2region/raw/master/data/ip2region.xdb"
+	_, _ = fmt.Fprintf(os.Stdout, "Starting download of ip2region.xdb...")
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return fmt.Errorf("network access is not available : %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	outFile, err := os.Create(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to create file: %w", err)
+	}
+	defer outFile.Close()
+
+	_, err = io.Copy(outFile, resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to write file: %w", err)
+	}
+
+	return nil
 }

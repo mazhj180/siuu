@@ -3,14 +3,16 @@ package server
 import (
 	"fmt"
 	"github.com/kardianos/service"
-	"log"
 	"net"
 	"net/http"
+	"os"
+	"path"
 	"siuu/handler"
 	"siuu/logger"
 	"siuu/server/config"
 	"siuu/server/handle"
 	"siuu/session"
+	"siuu/util"
 )
 
 type Server struct{}
@@ -28,8 +30,30 @@ func (s *Server) Start(_ service.Service) error {
 }
 
 func (s *Server) Stop(_ service.Service) error {
-	log.Println("[program] Stopping... (clean up resources)")
+	_, _ = fmt.Fprintf(os.Stdout, "[program] Stopping... (clean up resources)")
 	return nil
+}
+
+func (s *Server) InstallConfig() {
+	home := util.GetHomeDir()
+	root := path.Dir(home + "/.siuu/")
+
+	// build config file
+	if err := util.BuildConfiguration(root); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "cannot create config file %s, err: %s", root, err)
+	}
+
+	//download ip2region.xdb
+	if err := util.DownloadIp2Region(root + "/conf"); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "download ip2region.xdb failed %s", err)
+	}
+}
+
+func (s *Server) UninstallConfig() {
+	home := util.GetHomeDir()
+	if err := os.RemoveAll(home + "/.siuu"); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "uninstall config was wrong")
+	}
 }
 
 func startServer(port uint16) {

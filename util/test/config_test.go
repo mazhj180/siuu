@@ -21,3 +21,17 @@ func TestGetAllSettings(t *testing.T) {
 		fmt.Println(v)
 	}
 }
+
+func TestDownloadIp2Region(t *testing.T) {
+	err := util.DownloadIp2Region(".")
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+}
+
+func TestBuildConfig(t *testing.T) {
+	err := util.BuildConfiguration("./")
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+}

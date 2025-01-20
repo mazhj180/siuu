@@ -1,19 +1,18 @@
 package main
 
 import (
+	"fmt"
 	"github.com/kardianos/service"
 	"log"
 	"os"
 	"siuu/server"
-	"siuu/server/config/constant"
 	"siuu/util"
+	"strings"
 )
 
 // run as a daemon service usage : ./siuu install &&./siuu start
 // run as a normal program usage : ./siuu
 func main() {
-
-	p := util.GetConfig[string](constant.LogDirPath + "/siuu.log")
 
 	// build service config
 	conf := &service.Config{
@@ -23,11 +22,12 @@ func main() {
 		Option: map[string]interface{}{
 			"UserService": true,
 			"Label":       "siuu",
-			"LogOutput":   p,
+			"LogOutput":   util.GetHomeDir() + "./siuu/siuu.log",
 		},
 	}
 
-	s, err := service.New(&server.Server{}, conf)
+	siuu := &server.Server{}
+	s, err := service.New(siuu, conf)
 	if err != nil {
 		panic(err)
 	}
@@ -36,11 +36,22 @@ func main() {
 	// parameters: install/uninstall/start/stop/restart
 	if len(os.Args) > 1 {
 		cmd := os.Args[1]
+		if strings.EqualFold(cmd, "install") {
+			log.Println("InstallConfig() method called.")
+			siuu.InstallConfig()
+		}
+		if strings.EqualFold(cmd, "uninstall") {
+			siuu.UninstallConfig()
+		}
 		err = service.Control(s, cmd)
 		if err != nil {
 			log.Fatalf("Failed to %s: %v\n", cmd, err)
 		}
 		return
+	}
+
+	if !service.Interactive() {
+		_, _ = fmt.Fprintf(os.Stdout, "Suggestion: you'd better run this program in the way of daemon service.\n")
 	}
 
 	// start service

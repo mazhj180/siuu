@@ -10,7 +10,6 @@ import (
 	"path"
 	"reflect"
 	"runtime"
-	"strings"
 )
 
 var (
@@ -102,49 +101,6 @@ func GetSettings() []string {
 	return res
 }
 
-func BuildConfiguration(root string) error {
-
-	if err := os.MkdirAll(root+"/conf", os.ModePerm); err != nil {
-		return err
-	}
-
-	file, err := os.OpenFile(root+"/conf/conf.toml", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0666)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	var builder strings.Builder
-
-	builder.WriteString("[log]\n")
-	builder.WriteString(fmt.Sprintf("path = '%s'\n", root+"/log/"))
-	builder.WriteString("level.system = 'DEBUG'\n")
-	builder.WriteString("level.proxy = 'INFO'\n\n")
-
-	builder.WriteString("[proxy]\n")
-	builder.WriteString(fmt.Sprintf("path = '%s'\n", root+"/conf/pr.toml"))
-
-	builder.WriteString("[router]\n")
-	builder.WriteString("enable = true\n\n")
-
-	builder.WriteString("[router.path]\n")
-	builder.WriteString(fmt.Sprintf("table = '%s'\n", root+"/conf/pr.toml"))
-	builder.WriteString(fmt.Sprintf("xdb = '%s'\n", root+"/conf/ip2region.xdb"))
-
-	builder.WriteString("[server]\n")
-	builder.WriteString(fmt.Sprintf("port = %d\n", 17777))
-	builder.WriteString("[server.http]\n")
-	builder.WriteString(fmt.Sprintf("port = %d\n", 18888))
-	builder.WriteString("[server.socks]\n")
-	builder.WriteString(fmt.Sprintf("port = %d\n", 19999))
-
-	_, err = file.WriteString(builder.String())
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func DownloadIp2Region(dir string) error {
 	filePath := dir + "/ip2region.xdb"
 
@@ -152,12 +108,12 @@ func DownloadIp2Region(dir string) error {
 		return err
 	}
 
-	if _, err := os.Stat(filePath); !os.IsNotExist(err) {
-		return nil
+	if _, err := os.Stat(filePath); !os.IsNotExist(err) || err == nil {
+		return err
 	}
 
 	url := "https://github.com/lionsoul2014/ip2region/raw/master/data/ip2region.xdb"
-	_, _ = fmt.Fprintf(os.Stdout, "Starting download of ip2region.xdb...")
+	_, _ = fmt.Fprintf(os.Stdout, "Starting download of ip2region.xdb...\n")
 
 	resp, err := http.Get(url)
 	if err != nil {

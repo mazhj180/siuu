@@ -1,10 +1,15 @@
 package store
 
 import (
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"github.com/spf13/viper"
+	"io"
 	"maps"
+	"os"
+	"siuu/logger"
+	"siuu/server/config/constant"
 	"siuu/tunnel/proxy"
 	"siuu/tunnel/proxy/http"
 	"siuu/tunnel/proxy/shadow"
@@ -24,7 +29,7 @@ var (
 	rwxS     sync.RWMutex
 )
 
-func InitProxy(filepath string) {
+func InitProxy(filepath []string) {
 	direct = &proxy.DirectProxy{
 		Type:     proxy.DIRECT,
 		Name:     "direct",
@@ -32,14 +37,51 @@ func InitProxy(filepath string) {
 	}
 	proxyTable = make(map[string]proxy.Proxy)
 	selected = direct
+
+	constant.Signature = make(map[string]string)
+
 	v := viper.New()
-	v.SetConfigFile(filepath)
-	if err := v.ReadInConfig(); err != nil {
-		panic(fmt.Errorf("failed to initialize proxy: %w", err))
-	}
-	proxies := v.GetStringSlice("proxy.proxies")
-	if err := AddProxies(proxies...); err != nil {
-		panic(fmt.Errorf("failed to initialize proxy: %w", err))
+	v.SetConfigType("toml")
+	for _, f := range filepath {
+
+		if _, err := os.Stat(f); os.IsNotExist(err) {
+			logger.SWarn("failed to initialize proxy [%s]", f)
+			continue
+		}
+		fin, err := os.OpenFile(f, os.O_RDONLY, 0666)
+		if err != nil {
+			logger.SWarn("failed to initialize proxy [%s]", f)
+			continue
+		}
+		defer fin.Close()
+
+		hasher := sha256.New()
+		_, err = io.Copy(hasher, fin)
+		if err != nil {
+			logger.SWarn("failed to initialize proxy [%s]", f)
+			continue
+		}
+
+		signature := fmt.Sprintf("%xproxy", hasher.Sum(nil))
+		if s, ok := constant.Signature[f]; ok && s == signature {
+			continue
+		}
+		constant.Signature[f] = signature
+
+		_, err = fin.Seek(0, io.SeekStart)
+		if err != nil {
+			logger.SWarn("failed to initialize proxy [%s]", f)
+			continue
+		}
+
+		if err = v.ReadConfig(fin); err != nil {
+			logger.SWarn("failed to initialize proxy [%s]", f)
+			continue
+		}
+		proxies := v.GetStringSlice("proxy.proxies")
+		if err = AddProxies(proxies...); err != nil {
+			logger.SWarn("failed to initialize proxy [%s]", f)
+		}
 	}
 }
 
@@ -102,7 +144,8 @@ func AddProxies(proxies ...string) error {
 			return fmt.Errorf("%w: %s", proxy.ErrProxyTypeNotSupported, val[0])
 		}
 		if _, ok := proxyTable[prx.GetName()]; ok {
-			return errors.New("the same agent already exists")
+			logger.SWarn("the same agent already exists : [%s]", prx.GetName())
+			continue
 		}
 		proxyTable[prx.GetName()] = prx
 	}

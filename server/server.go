@@ -39,13 +39,13 @@ func (s *Server) InstallConfig() {
 	root := path.Dir(home + "/.siuu/")
 
 	// build config file
-	if err := util.BuildConfiguration(root); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "cannot create config file %s, err: %s", root, err)
+	if err := config.BuildConfiguration(root); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "cannot create config file %s, err: %s\n", root, err)
 	}
 
 	//download ip2region.xdb
 	if err := util.DownloadIp2Region(root + "/conf"); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "download ip2region.xdb failed %s", err)
+		_, _ = fmt.Fprintf(os.Stderr, "download ip2region.xdb failed %s\n", err)
 	}
 }
 

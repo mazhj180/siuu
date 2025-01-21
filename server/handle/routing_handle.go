@@ -12,8 +12,11 @@ func RegisterRouterHandle(mux *http.ServeMux, prefix string) {
 }
 
 func refreshRouter(w http.ResponseWriter, r *http.Request) {
-	routePath := util.GetConfig[string](constant.RouteConfigPath)
-	routePath = util.ExpandHomePath(routePath)
+	routePath := util.GetConfig[[]string](constant.RouteConfigPath)
+	var routePathC []string
+	for _, route := range routePath {
+		routePathC = append(routePathC, util.ExpandHomePath(route))
+	}
 	xdbPath := util.GetConfig[string](constant.RouteXdbPath)
 	xdbPath = util.ExpandHomePath(xdbPath)
 	if err := routing.Refresh(routePath, xdbPath); err != nil {

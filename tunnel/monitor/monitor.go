@@ -12,9 +12,15 @@ type Interface interface {
 	SpendTime() (float64, float64)
 }
 
-func Watch(conn net.Conn) Interface {
+func Watch(conn net.Conn, initValues ...int64) Interface {
+
+	var initV int64
+	for i, _ := range initValues {
+		initV += initValues[i]
+	}
 	return &monitor{
 		Conn:      conn,
+		up:        initV,
 		upTimer:   timer{},
 		downTimer: timer{},
 	}

@@ -50,7 +50,7 @@ func main() {
 		return
 	}
 
-	if !service.Interactive() {
+	if service.Interactive() {
 		_, _ = fmt.Fprintf(os.Stdout, "Suggestion: you'd better run this program in the way of daemon service.\n")
 	}
 

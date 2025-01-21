@@ -1,7 +1,7 @@
 package routing
 
 import (
-	"fmt"
+	"siuu/logger"
 	"siuu/tunnel/proxy"
 	"sync"
 )
@@ -16,15 +16,15 @@ var (
 	rwx    sync.RWMutex
 )
 
-func InitRouter(routePath, xdbPath string) {
+func InitRouter(routePath []string, xdbPath string) {
 	var err error
 	router, err = CreateRouter(routePath, xdbPath)
 	if err != nil {
-		panic(fmt.Errorf("failed to initialize router: %w", err))
+		logger.SWarn("failed to initialize router: %s", err)
 	}
 }
 
-func CreateRouter(routePath, xdbPath string) (Router, error) {
+func CreateRouter(routePath []string, xdbPath string) (Router, error) {
 	rwx.Lock()
 	defer rwx.Unlock()
 	r, err := NewDefaultRouter(routePath, xdbPath)
@@ -43,7 +43,7 @@ func CloseRouter() {
 	router = nil
 }
 
-func Refresh(routePath, xdbPath string) error {
+func Refresh(routePath []string, xdbPath string) error {
 	r, err := NewDefaultRouter(routePath, xdbPath)
 	if err != nil {
 		return err

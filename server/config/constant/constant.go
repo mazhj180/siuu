@@ -1,8 +1,17 @@
 package constant
 
 import (
+	_ "embed"
 	"runtime"
 	"siuu/util"
+)
+
+var (
+	//go:embed conf.toml
+	Conf []byte
+
+	//go:embed proxies.toml
+	Proxies []byte
 )
 
 type Key = string
@@ -23,6 +32,8 @@ const (
 var (
 	RootPath = util.AppRootPath
 	Platform PlatformKind
+
+	Signature map[string]string
 )
 
 type PlatformKind byte

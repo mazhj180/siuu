@@ -1,11 +1,15 @@
 package routing
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"github.com/lionsoul2014/ip2region/binding/golang/xdb"
 	"github.com/spf13/viper"
+	"io"
 	"net"
 	"os"
+	"siuu/logger"
+	"siuu/server/config/constant"
 	"siuu/server/store"
 	"siuu/tunnel/proxy"
 	"strings"
@@ -28,12 +32,9 @@ type DefaultRouter struct {
 	xdbPath string
 }
 
-func NewDefaultRouter(route, xdbp string) (*DefaultRouter, error) {
+func NewDefaultRouter(routeFile []string, xdbp string) (*DefaultRouter, error) {
 	v := viper.New()
-	v.SetConfigFile(route)
-	if err := v.ReadInConfig(); err != nil {
-		return nil, err
-	}
+	v.SetConfigType("toml")
 
 	r := &DefaultRouter{
 		route: routeTable{
@@ -43,50 +44,86 @@ func NewDefaultRouter(route, xdbp string) (*DefaultRouter, error) {
 		},
 	}
 
-	exacts := v.GetStringSlice("route.exacts")
-	for _, val := range exacts {
-		val = strings.TrimSpace(val)
-		kvs := strings.Split(val, ",")
+	for _, f := range routeFile {
 
-		prx := store.GetProxy(kvs[1])
-		if prx == nil {
-			_, _ = os.Stdout.WriteString(fmt.Sprintf("failed to get proxy: %s\n", kvs[1]))
+		if _, err := os.Stat(f); os.IsNotExist(err) {
 			continue
 		}
-		r.route.exacts[kvs[0]] = store.GetProxy(kvs[1])
-	}
-
-	wildcards := v.GetStringSlice("route.wildcards")
-	for _, val := range wildcards {
-		val = strings.TrimSpace(val)
-		kvs := strings.Split(val, ",")
-
-		prx := store.GetProxy(kvs[1])
-		if prx == nil {
-			_, _ = os.Stdout.WriteString(fmt.Sprintf("failed to get proxy: %s\n", kvs[1]))
+		file, err := os.OpenFile(f, os.O_RDONLY, 0666)
+		if err != nil {
 			continue
 		}
-		r.route.wildcards = append(r.route.wildcards, &wildcard{
-			rule: kvs[0],
-			prx:  prx,
-		})
-	}
+		defer file.Close()
 
-	geo := v.GetStringSlice("route.geo")
-	for _, val := range geo {
-		val = strings.TrimSpace(val)
-		kvs := strings.Split(val, ",")
-
-		prx := store.GetProxy(kvs[1])
-		if prx == nil {
-			_, _ = os.Stdout.WriteString(fmt.Sprintf("failed to get proxy: %s\n", kvs[1]))
+		hasher := sha256.New()
+		_, err = io.Copy(hasher, file)
+		if err != nil {
+			logger.SWarn("failed to initialize routing [%s]", f)
 			continue
 		}
-		r.route.geo[kvs[0]] = prx
+
+		signature := fmt.Sprintf("%xroute", hasher.Sum(nil))
+		if s, ok := constant.Signature[f]; ok && s == signature {
+			continue
+		}
+		constant.Signature[f] = signature
+
+		_, err = file.Seek(0, io.SeekStart)
+		if err != nil {
+			logger.SWarn("failed to initialize routing [%s]", f)
+			continue
+		}
+
+		if err = v.ReadConfig(file); err != nil {
+			return nil, err
+		}
+
+		exacts := v.GetStringSlice("route.exacts")
+		for _, val := range exacts {
+			val = strings.TrimSpace(val)
+			kvs := strings.Split(val, ",")
+
+			prx := store.GetProxy(kvs[1])
+			if prx == nil {
+				_, _ = os.Stdout.WriteString(fmt.Sprintf("failed to get proxy: %s\n", kvs[1]))
+				continue
+			}
+			r.route.exacts[kvs[0]] = store.GetProxy(kvs[1])
+		}
+
+		wildcards := v.GetStringSlice("route.wildcards")
+		for _, val := range wildcards {
+			val = strings.TrimSpace(val)
+			kvs := strings.Split(val, ",")
+
+			prx := store.GetProxy(kvs[1])
+			if prx == nil {
+				_, _ = os.Stdout.WriteString(fmt.Sprintf("failed to get proxy: %s\n", kvs[1]))
+				continue
+			}
+			r.route.wildcards = append(r.route.wildcards, &wildcard{
+				rule: kvs[0],
+				prx:  prx,
+			})
+		}
+
+		geo := v.GetStringSlice("route.geo")
+		for _, val := range geo {
+			val = strings.TrimSpace(val)
+			kvs := strings.Split(val, ",")
+
+			prx := store.GetProxy(kvs[1])
+			if prx == nil {
+				_, _ = os.Stdout.WriteString(fmt.Sprintf("failed to get proxy: %s\n", kvs[1]))
+				continue
+			}
+			r.route.geo[kvs[0]] = prx
+		}
 	}
+
 	xdbb, err := xdb.LoadVectorIndexFromFile(xdbp)
 	if err != nil {
-		panic(fmt.Errorf("failed to load ip router please check or disable autorouting err: %s", err))
+		return r, nil
 	}
 	r.ipXdb = xdbb
 	r.xdbPath = xdbp

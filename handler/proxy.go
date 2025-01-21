@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"siuu/logger"
 	"siuu/routing"
 	"siuu/tunnel"
@@ -15,7 +16,9 @@ func proxyHandle(ctx *context) {
 	}
 	logger.SDebug("<%s> client: handshakes successfully with siuu server", s.ID())
 	host := s.GetHost()
-	logger.SDebug("<%s> dst addr was [%s]", s.ID(), host)
+	port := s.GetPort()
+	addr := fmt.Sprintf("%s:%d", host, port)
+	logger.SDebug("<%s> dst addr was [%s]", s.ID(), addr)
 
 	r := routing.R()
 	if r != nil {

@@ -30,7 +30,7 @@ func do(p proto.Interface) {
 	}
 	client := &proxy.Client{
 		Sid:       sid,
-		Conn:      monitor.Watch(conn),
+		Conn:      monitor.Watch(conn, int64(len(od))),
 		Host:      host,
 		Port:      port,
 		IsTLS:     isTLS,

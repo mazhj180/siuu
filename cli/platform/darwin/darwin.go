@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
 	"siuu/server/config/constant"
 	"siuu/util"
 	"strings"
@@ -13,6 +14,8 @@ type Cli struct{}
 
 func (c *Cli) Logg(follow, prx, _ bool, number int) {
 	dir := util.GetConfig[string](constant.LogDirPath)
+	dir = path.Dir(dir)
+	dir = util.ExpandHomePath(dir)
 	var filePath string
 	if prx {
 		filePath = dir + "/proxy.log"

@@ -48,7 +48,7 @@ the app will create a directory named ".siuu" in your home directory, when it is
 there are some files or dir in the directory:
 - conf/: the init configuration file of siuu
 - log/: the log file of siuu
-- siuu-cli: the cli tool of siuu
+- siuucli: the cli tool of siuu
 - siuu: the app of siuu
 
 ### How to config?
@@ -68,12 +68,17 @@ socks.port = 19999  # socks5 proxy listen port
 
 # routing related configurations
 [router]
-enable = true      # whether to turn on the router 
-path.table = "~/.siuu/conf/pr.toml"  # routing table config file path
-path.xdb = "~/.siuu/conf/ip2region.xdb"  # xdb file path
+enable = true       # whether to turn on the router 
+path.table = [      # routing table config file path
+    '~/.siuu/conf/proxies.toml',
+]
+
+path.xdb = '~/.siuu/conf/ip2region.xdb'     # xdb file path
 
 [proxy]
-path = "~/.siuu/conf/pr.toml"   # proxy config file path
+path = [
+    '~/.siuu/conf/proxies.toml'      # proxy config file path
+]
 ```
 
 **proxies and routing table configuration file:**
@@ -151,6 +156,6 @@ geo = [
 ### How to start it?
 
 ```bash
-./siuu-cli proxy on/off    # turn on/off the global proxy
-./siuu-cli start/stop      # start/stop the app
+./siuucli proxy on/off    # turn on/off the global proxy
+./siuu start/stop      # start/stop the app
 ```

@@ -41,7 +41,7 @@ func init() {
 	}
 
 	RootCmd.Flags().BoolVarP(&showVersion, "version", "v", false, "show version information")
-	RootCmd.AddCommand(startCmd, stopCmd, configCmd, proxyCmd, logCmd)
+	RootCmd.AddCommand(startCmd, stopCmd, configCmd, proxyCmd, logCmd, routeCmd)
 }
 
 func root(cmd *cobra.Command, args []string) {

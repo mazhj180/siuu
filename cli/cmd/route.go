@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"fmt"
 	"github.com/spf13/cobra"
-	"io"
 	"net/http"
 	"os"
+	"siuu/server/config/constant"
+	"siuu/util"
 )
 
 var (
@@ -24,22 +26,13 @@ func init() {
 }
 
 func route(cmd *cobra.Command, args []string) {
-	if showRoute {
-		resp, err := http.Get("http://127.0.0.1:8080/route")
-		if err != nil {
-			_, _ = os.Stdout.WriteString(err.Error())
-			os.Exit(1)
-		}
-
-		data, err := io.ReadAll(resp.Body)
-		if err != nil {
-			_, _ = os.Stdout.WriteString(err.Error())
-			os.Exit(1)
-		}
-
-		_, _ = os.Stdout.WriteString(string(data))
-	}
 	if refresh {
+		port := util.GetConfig[int64](constant.ServerPort)
+		_, err := http.Get(fmt.Sprintf("http://127.0.0.1:%d/route/refresh", port))
+		if err != nil {
+			_, _ = os.Stdout.WriteString(err.Error())
+			os.Exit(1)
+		}
 		_, _ = os.Stdout.WriteString("refresh\n")
 	}
 }

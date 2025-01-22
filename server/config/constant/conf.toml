@@ -1,0 +1,22 @@
+[log]
+path = '~/.siuu/log/'
+level.system = 'DEBUG'
+level.proxy = 'INFO'
+
+[server]
+port = 17777
+http.port = 18888
+socks.port = 19999
+
+[router]
+enable = true
+path.table = [
+    '~/.siuu/conf/proxies.toml',
+]
+
+path.xdb = '~/.siuu/conf/ip2region.xdb'
+
+[proxy]
+path = [
+    '~/.siuu/conf/proxies.toml'
+]

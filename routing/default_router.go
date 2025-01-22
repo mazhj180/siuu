@@ -149,16 +149,16 @@ func (r *DefaultRouter) Route(host string) (proxy.Proxy, error) {
 
 	searcher, err := xdb.NewWithVectorIndex(r.xdbPath, r.ipXdb)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load ip router please check or disable autorouting err: %s", err)
+		return nil, fmt.Errorf("failed to load ip router please check or disable autorouting err: %w", err)
 	}
 
 	ips, err := net.LookupIP(host)
 	if err != nil || len(ips) == 0 {
-		return nil, fmt.Errorf("failed to lookup ip err: %s", err)
+		return nil, fmt.Errorf("failed to lookup ip err: %w", err)
 	}
 	str, err := searcher.SearchByStr(ips[0].String())
 	if err != nil {
-		return nil, fmt.Errorf("failed to search ip router by str err: %s", err)
+		return nil, fmt.Errorf("failed to search ip router by str err: %w", err)
 	}
 
 	for k, v := range r.route.geo {

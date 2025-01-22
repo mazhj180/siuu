@@ -12,7 +12,7 @@ func RegisterRouterHandle(mux *http.ServeMux, prefix string) {
 }
 
 func refreshRouter(w http.ResponseWriter, r *http.Request) {
-	routePath := util.GetConfig[[]string](constant.RouteConfigPath)
+	routePath := util.GetConfigSlice(constant.RouteConfigPath)
 	var routePathC []string
 	for _, route := range routePath {
 		routePathC = append(routePathC, util.ExpandHomePath(route))

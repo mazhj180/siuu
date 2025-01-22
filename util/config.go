@@ -66,13 +66,18 @@ func SetConfig(key string, value any) error {
 	return nil
 }
 
-func GetConfig[T ~int64 | ~string | ~bool | ~[]int64 | ~[]string](key string) T {
+func GetConfig[T ~int64 | ~string | ~bool](key string) T {
 	var zero T
 	v := CreateConfig("conf", "toml")
 	if v.Get(key) == nil {
 		return zero
 	}
 	return v.Get(key).(T)
+}
+
+func GetConfigSlice(key string) []string {
+	v := CreateConfig("conf", "toml")
+	return v.GetStringSlice(key)
 }
 
 func GetSettings() []string {

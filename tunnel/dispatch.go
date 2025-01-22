@@ -22,19 +22,19 @@ func do(p proto.Interface) {
 	host, port, conn := p.GetHost(), p.GetPort(), p.GetConn()
 
 	var isTLS bool
-	var od []byte
+	var reader *proxy.HttpReader
 	h, ok := p.(proto.HttpInterface)
 	if ok {
 		isTLS = h.IsTLS()
-		od = h.GetOtherData()
+		reader = h.GetHttpReader()
 	}
 	client := &proxy.Client{
-		Sid:       sid,
-		Conn:      monitor.Watch(conn, int64(len(od))),
-		Host:      host,
-		Port:      port,
-		IsTLS:     isTLS,
-		OtherData: od,
+		Sid:   sid,
+		Conn:  monitor.Watch(conn),
+		Host:  host,
+		Port:  port,
+		IsTLS: isTLS,
+		Req:   reader,
 	}
 	prx := p.GetProxy()
 	err := prx.Act(client)

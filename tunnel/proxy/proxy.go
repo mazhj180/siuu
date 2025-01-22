@@ -129,7 +129,7 @@ type Client struct {
 
 	// store some data that needs to be written before the bidirectional copy.
 	// example: the data that has been read out from the connection in http request
-	OtherData []byte
+	Req *HttpReader
 }
 
 type Proxy interface {

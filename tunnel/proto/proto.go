@@ -30,7 +30,7 @@ type Interface interface {
 
 type HttpInterface interface {
 	IsTLS() bool
-	GetOtherData() []byte
+	GetHttpReader() *proxy.HttpReader
 }
 
 type TrafficRecorder interface {

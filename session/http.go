@@ -2,7 +2,6 @@ package session
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"net"
 	"net/http"
@@ -16,10 +15,10 @@ import (
 type httpSession struct {
 	prx                proxy.Proxy
 	conn               net.Conn
+	reader             *proxy.HttpReader
 	isTLS              bool
 	addr               *Addr
 	id                 string
-	buf                []byte
 	up, down           int64
 	upSpeed, downSpeed float64
 }
@@ -59,29 +58,7 @@ func (s *httpSession) Handshakes() error {
 			return err
 		}
 	} else {
-		var buf bytes.Buffer
-		path := req.URL.Path
-		if req.URL.RawQuery != "" {
-			path += "?" + req.URL.RawQuery
-		}
-		_, _ = fmt.Fprintf(&buf, "%s %s %s\r\n", req.Method, path, req.Proto)
-
-		hasHost := false
-		for k, vals := range req.Header {
-			if strings.EqualFold(k, "Host") {
-				hasHost = true
-			}
-			for _, val := range vals {
-				_, _ = fmt.Fprintf(&buf, "%s: %s\r\n", k, val)
-			}
-		}
-
-		if !hasHost && req.Host != "" {
-			_, _ = fmt.Fprintf(&buf, "Host: %s\r\n", req.Host)
-		}
-
-		_, _ = fmt.Fprintf(&buf, "\r\n")
-		s.buf = buf.Bytes()
+		s.reader = proxy.NewHttpReader(req)
 	}
 	return nil
 }
@@ -125,8 +102,8 @@ func (s *httpSession) IsTLS() bool {
 	return s.isTLS
 }
 
-func (s *httpSession) GetOtherData() []byte {
-	return s.buf
+func (s *httpSession) GetHttpReader() *proxy.HttpReader {
+	return s.reader
 }
 
 func (s *httpSession) RecordUp(up int64, speed float64) {

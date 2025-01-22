@@ -12,6 +12,7 @@ import (
 
 // run as a daemon service usage : ./siuu install &&./siuu start
 // run as a normal program usage : ./siuu
+// you'd better run it as a daemon service, normal mode for debugging.
 func main() {
 
 	// build service config

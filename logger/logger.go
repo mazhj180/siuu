@@ -198,11 +198,19 @@ func PDebug(format string, v ...any) {
 	if proxyLogLevel > DebugLevel {
 		return
 	}
+	if proxyLogger == nil {
+		_, _ = os.Stdout.WriteString(fmt.Sprintf(timePrefix()+"[Debug]"+format, v...))
+		return
+	}
 	proxyLogger.logCh <- fmt.Sprintf(timePrefix()+"[Debug]"+format, v...)
 }
 
 func PInfo(format string, v ...any) {
 	if proxyLogLevel > InfoLevel {
+		return
+	}
+	if proxyLogger == nil {
+		_, _ = os.Stdout.WriteString(fmt.Sprintf(timePrefix()+"[Info]"+format, v...))
 		return
 	}
 	proxyLogger.logCh <- fmt.Sprintf(timePrefix()+"[Info]"+format, v...)
@@ -212,11 +220,19 @@ func PWarn(format string, v ...any) {
 	if proxyLogLevel > WarnLevel {
 		return
 	}
+	if proxyLogger == nil {
+		_, _ = os.Stdout.WriteString(fmt.Sprintf(timePrefix()+"[Warn]"+format, v...))
+		return
+	}
 	proxyLogger.logCh <- fmt.Sprintf(timePrefix()+"[Warn]"+format, v...)
 }
 
 func PError(format string, v ...any) {
 	if proxyLogLevel > ErrorLevel {
+		return
+	}
+	if proxyLogger == nil {
+		_, _ = os.Stderr.WriteString(fmt.Sprintf(timePrefix()+"[Error]"+format, v...))
 		return
 	}
 	proxyLogger.logCh <- fmt.Sprintf(timePrefix()+"[Error]"+format, v...)
@@ -226,11 +242,19 @@ func SDebug(format string, v ...any) {
 	if systemLogLevel > DebugLevel {
 		return
 	}
+	if systemLogger == nil {
+		_, _ = os.Stdout.WriteString(fmt.Sprintf(timePrefix()+"[Debug]"+format, v...))
+		return
+	}
 	systemLogger.logCh <- fmt.Sprintf(timePrefix()+"[Debug]"+format, v...)
 }
 
 func SInfo(format string, v ...any) {
 	if systemLogLevel > InfoLevel {
+		return
+	}
+	if systemLogger == nil {
+		_, _ = os.Stdout.WriteString(fmt.Sprintf(timePrefix()+"[Info]"+format, v...))
 		return
 	}
 	systemLogger.logCh <- fmt.Sprintf(timePrefix()+"[Info]"+format, v...)
@@ -240,11 +264,19 @@ func SWarn(format string, v ...any) {
 	if systemLogLevel > WarnLevel {
 		return
 	}
+	if systemLogger == nil {
+		_, _ = os.Stdout.WriteString(fmt.Sprintf(timePrefix()+"[Warn]"+format, v...))
+		return
+	}
 	systemLogger.logCh <- fmt.Sprintf(timePrefix()+"[Warn]"+format, v...)
 }
 
 func SError(format string, v ...any) {
 	if systemLogLevel > ErrorLevel {
+		return
+	}
+	if systemLogger == nil {
+		_, _ = os.Stderr.WriteString(fmt.Sprintf(timePrefix()+"[Error]"+format, v...))
 		return
 	}
 	systemLogger.logCh <- fmt.Sprintf(timePrefix()+"[Error]"+format, v...)

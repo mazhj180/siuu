@@ -42,8 +42,17 @@ func NewHttpReader(req *http.Request) *HttpReader {
 	if !slices.ContainsFunc(req.TransferEncoding, func(te string) bool {
 		return strings.EqualFold(te, "chunked")
 	}) {
-		r := io.MultiReader(bytes.NewReader(buf.Bytes()), req.Body)
+		var r io.Reader
+		if req.Body != nil {
+			r = io.MultiReader(bytes.NewReader(buf.Bytes()), req.Body)
+		} else {
+			r = bytes.NewReader(buf.Bytes())
+		}
 		return &HttpReader{r}
+	}
+
+	if req.Body == nil {
+		return &HttpReader{bytes.NewReader(buf.Bytes())}
 	}
 
 	pr, pw := io.Pipe()

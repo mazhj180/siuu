@@ -81,3 +81,7 @@ func setDefaultProxy(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
+
+func test(w http.ResponseWriter, r *http.Request) {
+
+}

@@ -15,6 +15,7 @@ import (
 	"siuu/tunnel/proxy/shadow"
 	"siuu/tunnel/proxy/socks"
 	"siuu/tunnel/proxy/torjan"
+	"siuu/tunnel/tester"
 	"strconv"
 	"strings"
 	"sync"
@@ -214,4 +215,14 @@ func GetSelectedProxy() proxy.Proxy {
 	rwxS.RLock()
 	defer rwxS.RUnlock()
 	return selected
+}
+
+func TestProxyConnection() map[string]float64 {
+	t := tester.NewTester("https://github.com/", "github.com", GetProxies())
+	t.Test()
+	res, err := t.GetResult()
+	if err != nil {
+		return nil
+	}
+	return res
 }

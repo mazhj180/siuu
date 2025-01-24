@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"siuu/session"
+	"siuu/server/session"
 	"siuu/tunnel/proxy"
 )
 

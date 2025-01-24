@@ -13,6 +13,7 @@ func RegisterProxyHandle(mux *http.ServeMux, prefix string) {
 	mux.HandleFunc(prefix+"/remove", removeProxy)
 	mux.HandleFunc(prefix+"/get", getProxies)
 	mux.HandleFunc(prefix+"/set", setDefaultProxy)
+	mux.HandleFunc(prefix+"/delay", testDelay)
 }
 
 func addProxy(w http.ResponseWriter, r *http.Request) {
@@ -82,6 +83,18 @@ func setDefaultProxy(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func test(w http.ResponseWriter, r *http.Request) {
+func testDelay(w http.ResponseWriter, r *http.Request) {
+	res := store.TestProxyConnection()
+	bytes, err := json.Marshal(res)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
+	if _, err = w.Write(bytes); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

@@ -100,12 +100,12 @@ func (t *tester) Test() {
 			done := make(chan struct{})
 			go func() {
 				if err = prx.Act(cli); err != nil {
-					t.res <- &result{prx: prx.GetName(), cost: -1}
+					safeSend(t.res, &result{prx: prx.GetName(), cost: -1})
 				} else {
 					timer.Stop()
 					cost := timer.Cost()
 					up, down := m.SpendTime()
-					t.res <- &result{prx: prx.GetName(), cost: cost - up - down}
+					safeSend(t.res, &result{prx: prx.GetName(), cost: cost - up - down})
 				}
 				close(done)
 			}()
@@ -121,6 +121,7 @@ func (t *tester) Test() {
 
 	t.wg.Wait()
 	t.res <- &result{cost: math.NaN()}
+	close(t.res)
 }
 
 func (t *tester) GetResult() (map[string]float64, error) {
@@ -131,12 +132,20 @@ func (t *tester) GetResult() (map[string]float64, error) {
 	for {
 		res := <-t.res
 		if math.IsNaN(res.cost) {
-			close(t.res)
 			break
 		}
 		resultMap[res.prx] = res.cost
 	}
 	return resultMap, nil
+}
+
+func safeSend(ch chan<- *result, res *result) {
+	defer func() {
+		if recover() != nil {
+			logger.SWarn("attempted to send to a closed channel : [%s]", res.prx)
+		}
+	}()
+	ch <- res
 }
 
 type result struct {

@@ -2,7 +2,6 @@ package socks
 
 import (
 	"encoding/binary"
-	"encoding/json"
 	"errors"
 	"io"
 	"net"
@@ -24,25 +23,7 @@ type SocksProxy struct {
 	Protocol proxy.Protocol
 }
 
-func (s *SocksProxy) String() string {
-	jbytes, err := json.Marshal(s)
-	if err != nil {
-		return ""
-	}
-	return string(jbytes)
-}
-
-func (s *SocksProxy) Act(client *proxy.Client) error {
-
-	if s.Protocol == proxy.TCP {
-		return s.actOfTcp(client)
-	}
-
-	return proxy.ErrProtocolNotSupported
-}
-
-func (s *SocksProxy) actOfTcp(client *proxy.Client) error {
-
+func (s *SocksProxy) ForwardTcp(client *proxy.Client) error {
 	conn := client.Conn
 	defer conn.Close()
 
@@ -188,6 +169,10 @@ func (s *SocksProxy) actOfTcp(client *proxy.Client) error {
 	}
 
 	return nil
+}
+
+func (s *SocksProxy) ForwardUdp(client *proxy.Client) (*proxy.UdpPocket, error) {
+	return nil, proxy.ErrProtocolNotSupported
 }
 
 func (s *SocksProxy) GetName() string {

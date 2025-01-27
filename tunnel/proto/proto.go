@@ -8,6 +8,7 @@ import (
 const (
 	HTTP Protocol = iota
 	SOCKS
+	UDP
 )
 
 type Protocol byte

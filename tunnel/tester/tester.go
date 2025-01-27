@@ -99,7 +99,7 @@ func (t *tester) Test() {
 
 			done := make(chan struct{})
 			go func() {
-				if err = prx.Act(cli); err != nil {
+				if err = prx.ForwardTcp(cli); err != nil {
 					safeSend(t.res, &result{prx: prx.GetName(), cost: -1})
 				} else {
 					timer.Stop()

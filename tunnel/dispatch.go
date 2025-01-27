@@ -37,7 +37,7 @@ func do(p proto.Interface) {
 		Req:   reader,
 	}
 	prx := p.GetProxy()
-	err := prx.Act(client)
+	err := prx.ForwardTcp(client)
 	if err != nil {
 		logger.SError("<%s> [%s] [%s] to [%s:%d] using by [%s]  err: %s",
 			sid,

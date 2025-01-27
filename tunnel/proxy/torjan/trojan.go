@@ -24,16 +24,7 @@ type TrojanProxy struct {
 	Sni      string
 }
 
-func (t *TrojanProxy) Act(client *proxy.Client) error {
-	if t.Protocol == proxy.TCP {
-		return t.actOfTcp(client)
-	} else if t.Protocol == proxy.UDP {
-		return proxy.ErrProtocolNotSupported
-	}
-	return nil
-}
-
-func (t *TrojanProxy) actOfTcp(client *proxy.Client) error {
+func (t *TrojanProxy) ForwardTcp(client *proxy.Client) error {
 	conn := client.Conn
 	defer conn.Close()
 
@@ -107,7 +98,10 @@ func (t *TrojanProxy) actOfTcp(client *proxy.Client) error {
 	}
 
 	return nil
+}
 
+func (t *TrojanProxy) ForwardUdp(client *proxy.Client) (*proxy.UdpPocket, error) {
+	return nil, proxy.ErrProtocolNotSupported
 }
 
 func (t *TrojanProxy) GetName() string {

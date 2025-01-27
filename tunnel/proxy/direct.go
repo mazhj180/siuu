@@ -1,7 +1,6 @@
 package proxy
 
 import (
-	"errors"
 	"io"
 	"net"
 	"siuu/logger"
@@ -16,22 +15,7 @@ type DirectProxy struct {
 	Protocol Protocol
 }
 
-func (d *DirectProxy) Act(client *Client) error {
-	if d.Protocol == TCP {
-		if err := d.actOfTcp(client); err != nil {
-			return err
-		}
-	} else if d.Protocol == UDP {
-		if err := d.actOfUdp(client); err != nil {
-			return err
-		}
-	} else {
-		return ErrProtocolNotSupported
-	}
-	return nil
-}
-
-func (d *DirectProxy) actOfTcp(client *Client) error {
+func (d *DirectProxy) ForwardTcp(client *Client) error {
 
 	conn := client.Conn
 	defer conn.Close()
@@ -69,8 +53,8 @@ func (d *DirectProxy) actOfTcp(client *Client) error {
 	return nil
 }
 
-func (d *DirectProxy) actOfUdp(client *Client) error {
-	return errors.New("it is not supported udp yet")
+func (d *DirectProxy) ForwardUdp(client *Client) (*UdpPocket, error) {
+	return nil, ErrProtocolNotSupported
 }
 
 func (d *DirectProxy) GetName() string {

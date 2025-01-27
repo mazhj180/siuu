@@ -2,7 +2,6 @@ package shadow
 
 import (
 	"encoding/binary"
-	"encoding/json"
 	"github.com/shadowsocks/go-shadowsocks2/core"
 	"io"
 	"net"
@@ -21,25 +20,7 @@ type ShadowSocksProxy struct {
 	Protocol proxy.Protocol
 }
 
-func (s *ShadowSocksProxy) String() string {
-	jbytes, err := json.Marshal(s)
-	if err != nil {
-		return ""
-	}
-	return string(jbytes)
-}
-
-func (s *ShadowSocksProxy) Act(client *proxy.Client) error {
-
-	if s.Protocol == proxy.TCP {
-		return s.actOfTcp(client)
-	}
-
-	return proxy.ErrProtocolNotSupported
-}
-
-func (s *ShadowSocksProxy) actOfTcp(client *proxy.Client) error {
-
+func (s *ShadowSocksProxy) ForwardTcp(client *proxy.Client) error {
 	conn := client.Conn
 	defer conn.Close()
 
@@ -98,6 +79,10 @@ func (s *ShadowSocksProxy) actOfTcp(client *proxy.Client) error {
 	}
 
 	return nil
+}
+
+func (s *ShadowSocksProxy) ForwardUdp(client *proxy.Client) (*proxy.UdpPocket, error) {
+	return nil, proxy.ErrProtocolNotSupported
 }
 
 func (s *ShadowSocksProxy) GetName() string {

@@ -11,7 +11,7 @@ import (
 	"siuu/server/config"
 	"siuu/server/handle"
 	"siuu/server/handler"
-	session2 "siuu/server/session"
+	"siuu/server/session"
 	"siuu/util"
 )
 
@@ -77,7 +77,7 @@ func startHttpProxyServer(port uint16) {
 			logger.SError("<%s> http conn accept err : %s", conn.RemoteAddr().String(), err)
 			continue
 		}
-		sess := session2.OpenHttpSession(conn)
+		sess := session.OpenHttpSession(conn)
 		go handler.Run(sess)
 	}
 }
@@ -93,7 +93,7 @@ func startSocksProxyServer(port uint16) {
 			logger.SError("<%s> socks conn accept err : %s", conn.RemoteAddr().String(), err)
 			continue
 		}
-		sess := session2.OpenSocksSession(conn)
+		sess := session.OpenSocksSession(conn)
 		go handler.Run(sess)
 	}
 }

@@ -18,20 +18,7 @@ type HttpProxy struct {
 	Protocol proxy.Protocol
 }
 
-func (h *HttpProxy) Act(client *proxy.Client) error {
-	if h.Protocol == proxy.TCP {
-		if err := h.actOfTcp(client); err != nil {
-			return err
-		}
-	} else if h.Protocol == proxy.UDP {
-		if err := h.actOfUdp(client); err != nil {
-			return err
-		}
-	}
-	return proxy.ErrProtocolNotSupported
-}
-
-func (h *HttpProxy) actOfTcp(client *proxy.Client) error {
+func (h *HttpProxy) ForwardTcp(client *proxy.Client) error {
 
 	conn := client.Conn
 	defer conn.Close()
@@ -81,8 +68,8 @@ func (h *HttpProxy) actOfTcp(client *proxy.Client) error {
 	return nil
 }
 
-func (h *HttpProxy) actOfUdp(client *proxy.Client) error {
-	return proxy.ErrProtocolNotSupported
+func (h *HttpProxy) ForwardUdp(client *proxy.Client) (*proxy.UdpPocket, error) {
+	return nil, proxy.ErrProtocolNotSupported
 }
 
 func (h *HttpProxy) GetName() string {

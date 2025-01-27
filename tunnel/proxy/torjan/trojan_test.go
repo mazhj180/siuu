@@ -22,7 +22,7 @@ func TestTrojan(t *testing.T) {
 	data := "GET / HTTP/1.1\nHost: www.bing.com\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7\nAccept-Encoding: gzip, deflate, br\nAccept-Language: en-US,en;q=0.9\nConnection: keep-alive"
 
 	// 服务器地址和端口
-	tp := &TrojanProxy{
+	tp := &Proxy{
 		Type:     proxy2.TROJAN,
 		Name:     "xxxxxxx",
 		Server:   "xxxxxx",

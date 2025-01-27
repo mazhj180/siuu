@@ -12,7 +12,7 @@ var (
 )
 
 func TestNewTester(t *testing.T) {
-	prx := &torjan.TrojanProxy{
+	prx := &torjan.Proxy{
 		Type:     proxy.TROJAN,
 		Name:     "xxxxzxz",
 		Server:   "xxxxxx.com",
@@ -28,7 +28,7 @@ func TestNewTester(t *testing.T) {
 		Protocol: proxy.TCP,
 	}
 
-	prx2 := &torjan.TrojanProxy{
+	prx2 := &torjan.Proxy{
 		Type:     proxy.TROJAN,
 		Name:     "kkkkkkk",
 		Server:   "ddddd.com",

@@ -13,7 +13,7 @@ import (
 var ErrSocksVerNotSupported = errors.New("socks version not supported")
 var ErrSocksAuthentication = errors.New("socks auth was fail or not support the way ")
 
-type SocksProxy struct {
+type Proxy struct {
 	Type     proxy.Type
 	Name     string
 	Server   string
@@ -23,7 +23,7 @@ type SocksProxy struct {
 	Protocol proxy.Protocol
 }
 
-func (s *SocksProxy) ForwardTcp(client *proxy.Client) error {
+func (s *Proxy) ForwardTcp(client *proxy.Client) error {
 	conn := client.Conn
 	defer conn.Close()
 
@@ -171,26 +171,26 @@ func (s *SocksProxy) ForwardTcp(client *proxy.Client) error {
 	return nil
 }
 
-func (s *SocksProxy) ForwardUdp(client *proxy.Client) (*proxy.UdpPocket, error) {
+func (s *Proxy) ForwardUdp(client *proxy.Client) (*proxy.UdpPocket, error) {
 	return nil, proxy.ErrProtocolNotSupported
 }
 
-func (s *SocksProxy) GetName() string {
+func (s *Proxy) GetName() string {
 	return s.Name
 }
 
-func (s *SocksProxy) GetType() proxy.Type {
+func (s *Proxy) GetType() proxy.Type {
 	return s.Type
 }
 
-func (s *SocksProxy) GetServer() string {
+func (s *Proxy) GetServer() string {
 	return s.Server
 }
 
-func (s *SocksProxy) GetPort() uint16 {
+func (s *Proxy) GetPort() uint16 {
 	return s.Port
 }
 
-func (s *SocksProxy) GetProtocol() proxy.Protocol {
+func (s *Proxy) GetProtocol() proxy.Protocol {
 	return s.Protocol
 }

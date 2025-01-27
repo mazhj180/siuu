@@ -15,6 +15,7 @@ const (
 	SOCKS
 	SHADOW
 	TROJAN
+	VMESS
 
 	// TCP it cannot forward UDP traffic.
 	TCP Protocol = 1

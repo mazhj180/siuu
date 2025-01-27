@@ -20,7 +20,7 @@ func TestAddPrx(t *testing.T) {
 		"Sni": "sxxasd"
 	}`
 
-	var tp torjan.TrojanProxy
+	var tp torjan.Proxy
 	err := json.Unmarshal([]byte(data), &tp)
 	if err != nil {
 		t.Error(err)

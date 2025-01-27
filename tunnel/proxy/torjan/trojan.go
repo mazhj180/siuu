@@ -14,7 +14,7 @@ import (
 	"strconv"
 )
 
-type TrojanProxy struct {
+type Proxy struct {
 	Type     proxy.Type
 	Name     string
 	Server   string
@@ -24,7 +24,7 @@ type TrojanProxy struct {
 	Sni      string
 }
 
-func (t *TrojanProxy) ForwardTcp(client *proxy.Client) error {
+func (t *Proxy) ForwardTcp(client *proxy.Client) error {
 	conn := client.Conn
 	defer conn.Close()
 
@@ -100,26 +100,26 @@ func (t *TrojanProxy) ForwardTcp(client *proxy.Client) error {
 	return nil
 }
 
-func (t *TrojanProxy) ForwardUdp(client *proxy.Client) (*proxy.UdpPocket, error) {
+func (t *Proxy) ForwardUdp(client *proxy.Client) (*proxy.UdpPocket, error) {
 	return nil, proxy.ErrProtocolNotSupported
 }
 
-func (t *TrojanProxy) GetName() string {
+func (t *Proxy) GetName() string {
 	return t.Name
 }
 
-func (t *TrojanProxy) GetType() proxy.Type {
+func (t *Proxy) GetType() proxy.Type {
 	return t.Type
 }
 
-func (t *TrojanProxy) GetServer() string {
+func (t *Proxy) GetServer() string {
 	return t.Server
 }
 
-func (t *TrojanProxy) GetPort() uint16 {
+func (t *Proxy) GetPort() uint16 {
 	return t.Port
 }
 
-func (t *TrojanProxy) GetProtocol() proxy.Protocol {
+func (t *Proxy) GetProtocol() proxy.Protocol {
 	return t.Protocol
 }

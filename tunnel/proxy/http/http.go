@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-type HttpProxy struct {
+type Proxy struct {
 	Type     proxy.Type
 	Name     string
 	Server   string
@@ -18,7 +18,7 @@ type HttpProxy struct {
 	Protocol proxy.Protocol
 }
 
-func (h *HttpProxy) ForwardTcp(client *proxy.Client) error {
+func (h *Proxy) ForwardTcp(client *proxy.Client) error {
 
 	conn := client.Conn
 	defer conn.Close()
@@ -68,26 +68,26 @@ func (h *HttpProxy) ForwardTcp(client *proxy.Client) error {
 	return nil
 }
 
-func (h *HttpProxy) ForwardUdp(client *proxy.Client) (*proxy.UdpPocket, error) {
+func (h *Proxy) ForwardUdp(client *proxy.Client) (*proxy.UdpPocket, error) {
 	return nil, proxy.ErrProtocolNotSupported
 }
 
-func (h *HttpProxy) GetName() string {
+func (h *Proxy) GetName() string {
 	return h.Name
 }
 
-func (h *HttpProxy) GetType() proxy.Type {
+func (h *Proxy) GetType() proxy.Type {
 	return h.Type
 }
 
-func (h *HttpProxy) GetServer() string {
+func (h *Proxy) GetServer() string {
 	return h.Server
 }
 
-func (h *HttpProxy) GetPort() uint16 {
+func (h *Proxy) GetPort() uint16 {
 	return h.Port
 }
 
-func (h *HttpProxy) GetProtocol() proxy.Protocol {
+func (h *Proxy) GetProtocol() proxy.Protocol {
 	return h.Protocol
 }

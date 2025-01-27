@@ -104,7 +104,7 @@ func AddProxies(proxies ...string) error {
 		var prx proxy.Proxy
 		switch val[0] {
 		case proxy.HTTPS.String(), "http":
-			prx = &http.HttpProxy{
+			prx = &http.Proxy{
 				Type:     proxy.HTTPS,
 				Name:     val[1],
 				Server:   val[2],
@@ -112,7 +112,7 @@ func AddProxies(proxies ...string) error {
 				Protocol: protocol,
 			}
 		case proxy.SOCKS.String():
-			prx = &socks.SocksProxy{
+			prx = &socks.Proxy{
 				Type:     proxy.SOCKS,
 				Name:     val[1],
 				Server:   val[2],
@@ -122,7 +122,7 @@ func AddProxies(proxies ...string) error {
 				Protocol: protocol,
 			}
 		case proxy.SHADOW.String():
-			prx = &shadow.ShadowSocksProxy{
+			prx = &shadow.Proxy{
 				Type:     proxy.SHADOW,
 				Name:     val[1],
 				Server:   val[2],
@@ -132,7 +132,7 @@ func AddProxies(proxies ...string) error {
 				Protocol: protocol,
 			}
 		case proxy.TROJAN.String():
-			prx = &torjan.TrojanProxy{
+			prx = &torjan.Proxy{
 				Type:     proxy.TROJAN,
 				Name:     val[1],
 				Server:   val[2],

@@ -39,12 +39,19 @@ var (
 		Args:  cobra.ExactArgs(1),
 		Run:   setDefaultPrx,
 	}
+
+	testDelayCmd = &cobra.Command{
+		Use:   "test",
+		Short: "test the latency of all proxy services",
+		Run:   testDelay,
+	}
 )
 
 func init() {
 	proxyCmd.AddCommand(onCmd)
 	proxyCmd.AddCommand(offCmd)
 	proxyCmd.AddCommand(setDefaultPrxCmd)
+	proxyCmd.AddCommand(testDelayCmd)
 	proxyCmd.Flags().BoolVarP(&showPrx, "list", "l", false, "list all of proxies")
 }
 
@@ -90,7 +97,7 @@ func turnOff(cmd *cobra.Command, args []string) {
 func setDefaultPrx(cmd *cobra.Command, args []string) {
 	name := strings.TrimSpace(args[0])
 	port := util.GetConfig[int64](constant.ServerPort)
-	resp, err := http.Get(fmt.Sprintf("http://127.0.0.1:%d/set?proxy=%s", port, name))
+	resp, err := http.Get(fmt.Sprintf("http://127.0.0.1:%d/prx/set?proxy=%s", port, name))
 	if err != nil {
 		_, _ = os.Stdout.WriteString(err.Error())
 		os.Exit(1)
@@ -101,4 +108,33 @@ func setDefaultPrx(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 	_, _ = os.Stdout.WriteString(name + "\n")
+}
+
+func testDelay(cmd *cobra.Command, args []string) {
+	port := util.GetConfig[int64](constant.ServerPort)
+	resp, err := http.Get(fmt.Sprintf("http://127.0.0.1:%d/prx/delay", port))
+	if err != nil {
+		_, _ = os.Stdout.WriteString(err.Error())
+		os.Exit(1)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		_, _ = os.Stdout.WriteString("failed to test delay\n")
+		os.Exit(1)
+	}
+
+	all, err := io.ReadAll(resp.Body)
+	if err != nil {
+		_, _ = os.Stdout.WriteString(err.Error())
+		os.Exit(1)
+	}
+	var res map[string]float64
+	if err = json.Unmarshal(all, &res); err != nil {
+		_, _ = os.Stdout.WriteString("failed to test delay\n")
+		os.Exit(1)
+	}
+
+	for k, v := range res {
+		_, _ = os.Stdout.WriteString(fmt.Sprintf("%s[%dms]\n", k, int(v*1000)))
+	}
 }

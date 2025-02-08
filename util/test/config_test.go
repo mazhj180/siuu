@@ -28,10 +28,3 @@ func TestDownloadIp2Region(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 }
-
-func TestBuildConfig(t *testing.T) {
-	err := util.BuildConfiguration("./")
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
-}

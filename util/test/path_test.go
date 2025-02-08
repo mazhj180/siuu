@@ -29,3 +29,7 @@ func TestPath(t *testing.T) {
 	fmt.Println(path.Dir(filename + "/../"))
 	fmt.Println(util.AppRootPath)
 }
+
+func TestHome(t *testing.T) {
+	fmt.Println(util.GetHomeDir())
+}

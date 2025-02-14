@@ -38,6 +38,8 @@ func (s *Server) InstallConfig() {
 	home := util.GetHomeDir()
 	root := path.Dir(home + "/.siuu/")
 
+	// export env
+
 	// build config file
 	if err := config.BuildConfiguration(root); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "cannot create config file %s, err: %s\n", root, err)

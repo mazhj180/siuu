@@ -21,9 +21,9 @@ type wildcard struct {
 }
 
 type routeTable struct {
-	exacts    map[string]proxy.Proxy
-	wildcards []*wildcard
-	geo       map[string]proxy.Proxy
+	exacts    map[string]*proxy.Proxy
+	wildcards map[string]*proxy.Proxy
+	geo       map[string]*proxy.Proxy
 }
 
 type DefaultRouter struct {
@@ -38,9 +38,9 @@ func NewDefaultRouter(routeFile []string, xdbp string) (*DefaultRouter, error) {
 
 	r := &DefaultRouter{
 		route: routeTable{
-			exacts:    make(map[string]proxy.Proxy),
-			wildcards: make([]*wildcard, 0),
-			geo:       make(map[string]proxy.Proxy),
+			exacts:    make(map[string]*proxy.Proxy),
+			wildcards: make(map[string]*proxy.Proxy),
+			geo:       make(map[string]*proxy.Proxy),
 		},
 	}
 
@@ -83,12 +83,12 @@ func NewDefaultRouter(routeFile []string, xdbp string) (*DefaultRouter, error) {
 			val = strings.TrimSpace(val)
 			kvs := strings.Split(val, ",")
 
-			prx := store.GetProxy(kvs[1])
+			prx := store.GetProxyPointer(kvs[1])
 			if prx == nil {
 				_, _ = os.Stdout.WriteString(fmt.Sprintf("failed to get proxy: %s\n", kvs[1]))
 				continue
 			}
-			r.route.exacts[kvs[0]] = store.GetProxy(kvs[1])
+			r.route.exacts[kvs[0]] = prx
 		}
 
 		wildcards := v.GetStringSlice("route.wildcards")
@@ -96,15 +96,12 @@ func NewDefaultRouter(routeFile []string, xdbp string) (*DefaultRouter, error) {
 			val = strings.TrimSpace(val)
 			kvs := strings.Split(val, ",")
 
-			prx := store.GetProxy(kvs[1])
+			prx := store.GetProxyPointer(kvs[1])
 			if prx == nil {
 				_, _ = os.Stdout.WriteString(fmt.Sprintf("failed to get proxy: %s\n", kvs[1]))
 				continue
 			}
-			r.route.wildcards = append(r.route.wildcards, &wildcard{
-				rule: kvs[0],
-				prx:  prx,
-			})
+			r.route.wildcards[kvs[0]] = prx
 		}
 
 		geo := v.GetStringSlice("route.geo")
@@ -112,7 +109,7 @@ func NewDefaultRouter(routeFile []string, xdbp string) (*DefaultRouter, error) {
 			val = strings.TrimSpace(val)
 			kvs := strings.Split(val, ",")
 
-			prx := store.GetProxy(kvs[1])
+			prx := store.GetProxyPointer(kvs[1])
 			if prx == nil {
 				_, _ = os.Stdout.WriteString(fmt.Sprintf("failed to get proxy: %s\n", kvs[1]))
 				continue
@@ -133,17 +130,17 @@ func NewDefaultRouter(routeFile []string, xdbp string) (*DefaultRouter, error) {
 func (r *DefaultRouter) Route(host string) (proxy.Proxy, error) {
 
 	if p, ok := r.route.exacts[host]; ok {
-		return p, nil
+		return *p, nil
 	}
 
-	for _, w := range r.route.wildcards {
-		rl := len(w.rule[1:])
+	for k, v := range r.route.wildcards {
+		rl := len(k[1:])
 		hl := len(host)
 		if hl < rl {
 			continue
 		}
-		if host[hl-rl:] == w.rule[1:] {
-			return w.prx, nil
+		if host[hl-rl:] == k[1:] {
+			return *v, nil
 		}
 	}
 
@@ -164,15 +161,43 @@ func (r *DefaultRouter) Route(host string) (proxy.Proxy, error) {
 	for k, v := range r.route.geo {
 		if k[0:1] == "!" {
 			if !strings.Contains(str, k[1:]) {
-				return v, nil
+				return *v, nil
 			}
 		}
 		if strings.Contains(str, k) {
-			return v, nil
+			return *v, nil
 		}
 	}
 
 	return store.GetSelectedProxy(), nil
+}
+
+func (r *DefaultRouter) RelatedRoutes(prx string) string {
+	builder := strings.Builder{}
+	builder.WriteString("exacts:\n")
+	for k, v := range r.route.exacts {
+		if (*v).GetName() == prx {
+			builder.WriteString(k + "\n")
+		}
+	}
+	builder.WriteString("\n")
+
+	builder.WriteString("wildcards:\n")
+	for k, v := range r.route.wildcards {
+		if (*v).GetName() == prx {
+			builder.WriteString(k + "\n")
+		}
+	}
+	builder.WriteString("\n")
+
+	builder.WriteString("geo:\n")
+	for k, v := range r.route.geo {
+		if (*v).GetName() == prx {
+			builder.WriteString(k + "\n")
+		}
+	}
+
+	return builder.String()
 }
 
 func (*DefaultRouter) Name() string {

@@ -21,11 +21,9 @@ func main() {
 		DisplayName: "siuu",
 		Description: "siuu is a user-level daemon that will automatically restart to maintain background operation but will not run automatically when the user logs in.",
 		Option: map[string]interface{}{
-			"UserService":       true,
-			"Label":             "siuu",
-			"KeepAlive":         false,
-			"StandardOutPath":   util.GetHomeDir() + "/.siuu/log/daemon-out.log",
-			"StandardErrorPath": util.GetHomeDir() + "/.siuu/log/daemon-err.log",
+			"UserService":  true,
+			"Label":        "siuu",
+			"LogDirectory": util.GetHomeDir() + "/.siuu/log",
 		},
 	}
 

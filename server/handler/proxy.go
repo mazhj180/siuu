@@ -20,13 +20,15 @@ func proxyHandle(ctx *context) {
 	addr := fmt.Sprintf("%s:%d", host, port)
 	logger.SDebug("<%s> dst addr was [%s]", s.ID(), addr)
 
-	r := routing.R()
-	if r != nil {
-		if prx, err := r.Route(host); err != nil {
-			logger.SWarn("<%s> route router failed; err: %s", s.ID(), err)
-		} else {
-			logger.SDebug("<%s> client routing using by [%s] router", s.ID(), r.Name())
-			s.SetProxy(prx)
+	if host != "127.0.0.1" {
+		r := routing.R()
+		if r != nil {
+			if prx, err := r.Route(host); err != nil {
+				logger.SWarn("<%s> route router failed; err: %s", s.ID(), err)
+			} else {
+				logger.SDebug("<%s> client routing using by [%s] router", s.ID(), r.Name())
+				s.SetProxy(prx)
+			}
 		}
 	}
 

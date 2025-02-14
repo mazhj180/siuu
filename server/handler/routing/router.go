@@ -9,6 +9,7 @@ import (
 type Router interface {
 	Name() string
 	Route(string) (proxy.Proxy, error)
+	RelatedRoutes(prx string) string
 }
 
 var (

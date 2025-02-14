@@ -24,6 +24,7 @@ import (
 var (
 	direct     *proxy.DirectProxy
 	proxyTable map[string]proxy.Proxy
+	proxyNames []string // for sorting
 	rwx        sync.RWMutex
 
 	selected proxy.Proxy
@@ -149,6 +150,7 @@ func AddProxies(proxies ...string) error {
 			continue
 		}
 		proxyTable[prx.GetName()] = prx
+		proxyNames = append(proxyNames, prx.GetName())
 	}
 	return nil
 }
@@ -177,12 +179,26 @@ func GetProxy(name string) proxy.Proxy {
 	return proxyTable[name]
 }
 
+func GetProxyPointer(name string) *proxy.Proxy {
+	if name == "direct" {
+		var d proxy.Proxy = direct
+		return &d
+	}
+	if name == "default" {
+		return &selected
+	}
+	rwx.RLock()
+	defer rwx.RUnlock()
+	prx := proxyTable[name]
+	return &prx
+}
+
 func GetProxies() []proxy.Proxy {
 	rwx.RLock()
 	defer rwx.RUnlock()
 	var proxies = make([]proxy.Proxy, 0, len(proxyTable))
-	for _, p := range proxyTable {
-		proxies = append(proxies, p)
+	for _, p := range proxyNames {
+		proxies = append(proxies, proxyTable[p])
 	}
 
 	return append([]proxy.Proxy{selected, direct}, proxies...)
@@ -217,8 +233,8 @@ func GetSelectedProxy() proxy.Proxy {
 	return selected
 }
 
-func TestProxyConnection() map[string]float64 {
-	t := tester.NewTester("https://github.com/", "github.com", GetProxies())
+func TestProxyConnection(proxies []proxy.Proxy) map[string]float64 {
+	t := tester.NewTester("https://github.com/", "github.com", proxies)
 	t.Test()
 	res, err := t.GetResult()
 	if err != nil {

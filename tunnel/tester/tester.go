@@ -60,8 +60,8 @@ func (t *tester) Test() {
 		go func(prx proxy.Proxy) {
 			defer t.wg.Done()
 
-			// set timeout 5s
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			// set timeout 2s
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 			defer cancel()
 
 			req, err := http.NewRequest("GET", t.url, nil)

@@ -19,7 +19,9 @@ var (
 func init() {
 	handlers = []handle{
 		loggingHandle,
-		proxyHandle,
+		handshakeHandle,
+		routeHandle,
+		forwardHandle,
 	}
 }
 
@@ -28,6 +30,11 @@ type handle func(*context)
 type context struct {
 	session session.Session
 	index   int
+}
+
+func (c *context) skip() {
+	c.index++
+	c.next()
 }
 
 func (c *context) next() {

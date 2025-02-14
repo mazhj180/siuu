@@ -2,6 +2,7 @@ package test
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"path"
 	"siuu/util"
@@ -32,4 +33,10 @@ func TestPath(t *testing.T) {
 
 func TestHome(t *testing.T) {
 	fmt.Println(util.GetHomeDir())
+}
+
+func TestParseIp(t *testing.T) {
+	dst := "192.168.3.127"
+	ip := net.ParseIP(dst)
+	fmt.Println(ip.IsPrivate())
 }

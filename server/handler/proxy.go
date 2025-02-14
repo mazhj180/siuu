@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"net"
 	"siuu/logger"
 	"siuu/server/handler/routing"
 	"siuu/tunnel"
@@ -20,7 +21,13 @@ func proxyHandle(ctx *context) {
 	addr := fmt.Sprintf("%s:%d", host, port)
 	logger.SDebug("<%s> dst addr was [%s]", s.ID(), addr)
 
-	if host != "127.0.0.1" {
+	dst := s.GetConn().RemoteAddr().String()
+	dstIp, _, err := net.SplitHostPort(dst)
+	if err != nil {
+		logger.SError("<%s> get dst ip was failed; err: %s", s.ID(), err)
+	}
+
+	if ip := net.ParseIP(dstIp); ip != nil && !ip.IsLoopback() && !ip.IsPrivate() {
 		r := routing.R()
 		if r != nil {
 			if prx, err := r.Route(host); err != nil {

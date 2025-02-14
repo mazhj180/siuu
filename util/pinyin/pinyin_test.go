@@ -1,9 +1,8 @@
-package test
+package pinyin
 
 import (
 	"fmt"
 	"math/rand"
-	"siuu/util"
 	"testing"
 )
 
@@ -12,7 +11,7 @@ func TestFuzzy(t *testing.T) {
 	testCases := []string{"xia", "x", "xiang", "shang", "bei", "gz", "bj", "北"}
 
 	for _, keyword := range testCases {
-		matches := util.FuzzyMatch(data, keyword)
+		matches := FuzzyMatch(data, keyword)
 		fmt.Printf("搜索 \"%s\": %v\n", keyword, matches)
 	}
 }
@@ -34,6 +33,6 @@ func BenchmarkFuzzyMatchLargeDataset(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = util.FuzzyMatch(data, keyword)
+		_ = FuzzyMatch(data, keyword)
 	}
 }

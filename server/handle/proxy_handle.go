@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"siuu/server/store"
 	"siuu/tunnel/proxy"
-	"siuu/util"
+	"siuu/util/pinyin"
 	"strings"
 )
 
@@ -88,7 +88,7 @@ func getProxies(w http.ResponseWriter, r *http.Request) {
 			names[i] = proxies[i].GetName()
 		}
 
-		names = util.FuzzyMatch(names, prx)
+		names = pinyin.FuzzyMatch(names, prx)
 		proxies = make([]proxy.Proxy, len(names))
 		for i := range names {
 			proxies[i] = store.GetProxy(names[i])
@@ -145,7 +145,7 @@ func testDelay(w http.ResponseWriter, r *http.Request) {
 			names[i] = proxies[i].GetName()
 		}
 
-		names = util.FuzzyMatch(names, prx)
+		names = pinyin.FuzzyMatch(names, prx)
 		proxies = make([]proxy.Proxy, len(names))
 		for i := range names {
 			proxies[i] = store.GetProxy(names[i])

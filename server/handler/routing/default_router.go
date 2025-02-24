@@ -12,6 +12,7 @@ import (
 	"siuu/server/config/constant"
 	"siuu/server/store"
 	"siuu/tunnel/proxy"
+	"siuu/util"
 	"strings"
 )
 
@@ -45,7 +46,7 @@ func NewDefaultRouter(routeFile []string, xdbp string) (*DefaultRouter, error) {
 	}
 
 	for _, f := range routeFile {
-
+		f = util.ExpandHomePath(f)
 		if _, err := os.Stat(f); os.IsNotExist(err) {
 			continue
 		}

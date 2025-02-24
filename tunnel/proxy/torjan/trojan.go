@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"crypto/tls"
-	"crypto/x509"
 	"encoding/binary"
 	"encoding/hex"
 	"io"
@@ -30,10 +29,8 @@ func (t *Proxy) ForwardTcp(client *proxy.Client) error {
 
 	// tls handshake
 	tlsConfig := &tls.Config{
-		ServerName: t.Sni,
-		VerifyPeerCertificate: func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
-			return nil
-		},
+		ServerName:         t.Sni,
+		InsecureSkipVerify: true,
 	}
 
 	agency, err := tls.Dial("tcp", net.JoinHostPort(t.Server, strconv.FormatUint(uint64(t.Port), 10)), tlsConfig)

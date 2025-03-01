@@ -2,6 +2,7 @@ package routing
 
 import (
 	"siuu/logger"
+	"siuu/tunnel"
 	"siuu/tunnel/proxy"
 	"sync"
 )
@@ -52,5 +53,6 @@ func Refresh(routePath []string, xdbPath string) error {
 	rwx.Lock()
 	defer rwx.Unlock()
 	router = r
+	tunnel.T.Interrupt()
 	return nil
 }

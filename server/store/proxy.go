@@ -215,6 +215,8 @@ func RemoveProxies(names ...string) {
 func SetSelectedProxy(prx string) error {
 	rwxS.Lock()
 	defer rwxS.Unlock()
+	go tunnel.T.Interrupt()
+
 	if prx == "direct" {
 		selected = direct
 		return nil

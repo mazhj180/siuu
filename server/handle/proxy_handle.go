@@ -72,8 +72,6 @@ func getProxy(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
-
 }
 
 func getProxies(w http.ResponseWriter, r *http.Request) {
@@ -106,8 +104,6 @@ func getProxies(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
-
 }
 
 func setDefaultProxy(w http.ResponseWriter, r *http.Request) {
@@ -165,5 +161,4 @@ func testDelay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
 }

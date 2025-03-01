@@ -1,11 +1,13 @@
 package http
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"siuu/tunnel/proxy"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Proxy struct {
@@ -16,19 +18,13 @@ type Proxy struct {
 	Protocol proxy.Protocol
 }
 
-func (h *Proxy) Connect(addr string, port uint16) (net.Conn, error) {
+func (h *Proxy) Connect(ctx context.Context, addr string, port uint16) (*proxy.Pd, error) {
 
-	tcpAddr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(h.Server, strconv.FormatUint(uint64(h.Port), 10)))
-	if err != nil {
-		return nil, err
+	dialer := &net.Dialer{
+		Timeout: 30 * time.Second,
 	}
-
-	agency, err := net.DialTCP("tcp", nil, tcpAddr)
+	agency, err := dialer.DialContext(ctx, "tcp", net.JoinHostPort(h.Server, strconv.FormatUint(uint64(h.Port), 10)))
 	if err != nil {
-		return nil, err
-	}
-
-	if err = agency.SetKeepAlive(true); err != nil {
 		return nil, err
 	}
 
@@ -48,7 +44,7 @@ func (h *Proxy) Connect(addr string, port uint16) (net.Conn, error) {
 		return nil, proxy.ErrProxyResp
 	}
 
-	return agency, nil
+	return proxy.NewPd(agency), nil
 }
 
 func (h *Proxy) GetName() string {

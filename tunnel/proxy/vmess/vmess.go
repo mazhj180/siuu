@@ -1,6 +1,7 @@
 package vmess
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/md5"
 	"crypto/tls"
@@ -22,7 +23,7 @@ type Proxy struct {
 	Protocol proxy.Protocol
 }
 
-func (v *Proxy) Connect(addr string, port uint16) (net.Conn, error) {
+func (v *Proxy) Connect(ctx context.Context, addr string, port uint16) (net.Conn, error) {
 	conf := &tls.Config{
 		InsecureSkipVerify: true,
 	}

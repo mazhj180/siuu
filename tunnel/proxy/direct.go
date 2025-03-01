@@ -1,8 +1,10 @@
 package proxy
 
 import (
+	"context"
 	"net"
 	"strconv"
+	"time"
 )
 
 type DirectProxy struct {
@@ -13,20 +15,16 @@ type DirectProxy struct {
 	Protocol Protocol
 }
 
-func (d *DirectProxy) Connect(addr string, port uint16) (net.Conn, error) {
-	tcpAddr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(addr, strconv.FormatUint(uint64(port), 10)))
+func (d *DirectProxy) Connect(ctx context.Context, addr string, port uint16) (*Pd, error) {
+	dialer := &net.Dialer{
+		Timeout: 30 * time.Second,
+	}
+	agency, err := dialer.DialContext(ctx, "tcp", net.JoinHostPort(addr, strconv.FormatUint(uint64(port), 10)))
 	if err != nil {
 		return nil, err
 	}
 
-	agency, err := net.DialTCP("tcp", nil, tcpAddr)
-	if err != nil {
-		return nil, err
-	}
-	if err = agency.SetKeepAlive(true); err != nil {
-		return nil, err
-	}
-	return agency, nil
+	return &Pd{agency}, nil
 }
 
 func (d *DirectProxy) GetName() string {

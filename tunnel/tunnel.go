@@ -3,7 +3,6 @@ package tunnel
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"errors"
 	"io"
 	"net"
@@ -59,7 +58,9 @@ func (t *tunnel) In(p proto.Interface) (Traffic, error) {
 	timer := monitor.Timer{}
 	timer.Start()
 
-	agency, err := prx.Connect(host, port)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	agency, err := prx.Connect(ctx, host, port)
 	if err != nil {
 		return Traffic{}, err
 	}
@@ -84,7 +85,7 @@ func (t *tunnel) In(p proto.Interface) (Traffic, error) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		defer Close(agency)
+		defer agency.CloseWriter()
 		defer t.remove(sid)
 		if _, err = io.Copy(agency, monitored); err != nil {
 			logger.SWarn("<%s> %s", sid, err)
@@ -143,18 +144,14 @@ func (t *tunnel) Interrupt() []string {
 }
 
 func (t *tunnel) Ping(prx proxy.Proxy) (Traffic, error) {
-	req, err := http.NewRequest("GET", "https://github.com", nil)
+	host := "github.com"
+	if prx.GetType() == proxy.DIRECT {
+		host = "baidu.com"
+	}
+	req, err := http.NewRequest("GET", "https://"+host, nil)
 	if err != nil {
 		return Traffic{}, err
 	}
-
-	req.Header.Set("Host", "github.com")
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36")
-	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
-	req.Header.Set("Accept-Language", "en-US,en;q=0.9")
-	req.Header.Set("Accept-Encoding", "gzip, deflate, br")
-	req.Header.Set("Connection", "keep-alive")
-	req.Header.Set("Upgrade-Insecure-Requests", "1")
 
 	r := proxy.NewHttpReader(req)
 	w := &bytes.Buffer{}
@@ -172,16 +169,29 @@ func (t *tunnel) Ping(prx proxy.Proxy) (Traffic, error) {
 	timer := monitor.Timer{}
 	timer.Start()
 
-	agency, err := prx.Connect("github.com", 433)
-	if err != nil {
-		return Traffic{}, err
-	}
-	delay := timer.Cost()
-
+	var agency *proxy.Pd
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		defer Close(agency)
+		agency, err = prx.Connect(ctx, host, 443)
+	}()
+
+	select {
+	case <-done:
+	case <-ctx.Done():
+		return Traffic{}, PingTimeoutErr
+	}
+
+	if err != nil {
+		return Traffic{}, err
+	}
+
+	delay := timer.Cost()
+
+	done = make(chan struct{})
+	go func() {
+		defer close(done)
+		defer agency.CloseWriter()
 		_, _ = io.Copy(agency, monitored)
 	}()
 
@@ -199,6 +209,7 @@ func (t *tunnel) Ping(prx proxy.Proxy) (Traffic, error) {
 	case <-ctx.Done():
 		err = PingTimeoutErr
 	}
+	_ = agency.Close()
 
 	return tr, err
 }
@@ -226,13 +237,4 @@ type Traffic struct {
 	UpSpeed, DownSpeed         float64
 
 	Delay float64
-}
-
-func Close(conn net.Conn) {
-	switch c := conn.(type) {
-	case *net.TCPConn:
-		c.CloseWrite()
-	case *tls.Conn:
-		c.CloseWrite()
-	}
 }

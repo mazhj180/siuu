@@ -2,6 +2,8 @@ package proxy
 
 import (
 	"bytes"
+	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -154,10 +156,7 @@ type Proxy interface {
 
 	// Connect connects to the proxy with the given host and port.
 	// It returns the connection if success, otherwise returns an error.
-	Connect(string, uint16) (net.Conn, error)
-	//Close() error
-	//CloseWriter() error
-	//CloseReader() error
+	Connect(context.Context, string, uint16) (*Pd, error)
 
 	GetType() Type
 	GetName() string
@@ -166,14 +165,33 @@ type Proxy interface {
 	GetProtocol() Protocol
 }
 
-type PrxFd struct {
+type Pd struct {
 	conn net.Conn
 }
 
-func (p *PrxFd) Read(b []byte) (n int, err error) {
+func (p *Pd) Read(b []byte) (n int, err error) {
 	return p.conn.Read(b)
 }
 
-func (p *PrxFd) Write(b []byte) (n int, err error) {
+func (p *Pd) Write(b []byte) (n int, err error) {
 	return p.conn.Write(b)
+}
+
+func (p *Pd) Close() error {
+	return p.conn.Close()
+}
+
+func (p *Pd) CloseWriter() error {
+	switch c := p.conn.(type) {
+	case *net.TCPConn:
+		return c.CloseWrite()
+	case *tls.Conn:
+		return c.CloseWrite()
+	default:
+		return p.Close()
+	}
+}
+
+func NewPd(conn net.Conn) *Pd {
+	return &Pd{conn: conn}
 }

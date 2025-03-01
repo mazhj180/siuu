@@ -2,6 +2,7 @@ package torjan
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"crypto/tls"
 	"encoding/binary"
@@ -9,6 +10,7 @@ import (
 	"net"
 	"siuu/tunnel/proxy"
 	"strconv"
+	"time"
 )
 
 type Proxy struct {
@@ -23,13 +25,18 @@ type Proxy struct {
 	Sni      string
 }
 
-func (t *Proxy) Connect(addr string, port uint16) (net.Conn, error) {
+func (t *Proxy) Connect(ctx context.Context, addr string, port uint16) (*proxy.Pd, error) {
 	tlsConfig := &tls.Config{
 		ServerName:         t.Sni,
 		InsecureSkipVerify: true,
 	}
-
-	agency, err := tls.Dial("tcp", net.JoinHostPort(t.Server, strconv.FormatUint(uint64(t.Port), 10)), tlsConfig)
+	dialer := &tls.Dialer{
+		NetDialer: &net.Dialer{
+			Timeout: 30 * time.Second,
+		},
+		Config: tlsConfig,
+	}
+	agency, err := dialer.DialContext(ctx, "tcp", net.JoinHostPort(t.Server, strconv.FormatUint(uint64(t.Port), 10)))
 	if err != nil {
 		return nil, err
 	}
@@ -77,9 +84,8 @@ func (t *Proxy) Connect(addr string, port uint16) (net.Conn, error) {
 	if _, err = agency.Write(append(buf.Bytes(), []byte{0x0d, 0x0a}...)); err != nil {
 		return nil, err
 	}
-	t.conn = agency
 
-	return agency, nil
+	return proxy.NewPd(agency), nil
 }
 
 func (t *Proxy) GetName() string {

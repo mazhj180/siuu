@@ -1,11 +1,13 @@
 package shadow
 
 import (
+	"context"
 	"encoding/binary"
 	"github.com/shadowsocks/go-shadowsocks2/core"
 	"net"
 	"siuu/tunnel/proxy"
 	"strconv"
+	"time"
 )
 
 type Proxy struct {
@@ -18,13 +20,11 @@ type Proxy struct {
 	Protocol proxy.Protocol
 }
 
-func (s *Proxy) Connect(addr string, port uint16) (net.Conn, error) {
-	tcpAddr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(s.Server, strconv.FormatUint(uint64(s.Port), 10)))
-	if err != nil {
-		return nil, err
+func (s *Proxy) Connect(ctx context.Context, addr string, port uint16) (*proxy.Pd, error) {
+	dialer := &net.Dialer{
+		Timeout: 30 * time.Second,
 	}
-
-	agency, err := net.DialTCP("tcp", nil, tcpAddr)
+	agency, err := dialer.DialContext(ctx, "tcp", net.JoinHostPort(s.Server, strconv.FormatUint(uint64(s.Port), 10)))
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func (s *Proxy) Connect(addr string, port uint16) (net.Conn, error) {
 	if _, err = agency.Write(req); err != nil {
 		return nil, err
 	}
-	return agency, nil
+	return proxy.NewPd(agency), nil
 }
 
 func (s *Proxy) GetName() string {

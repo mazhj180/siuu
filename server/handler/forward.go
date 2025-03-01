@@ -15,6 +15,7 @@ func forwardHandle(ctx *context) {
 
 	ctx.up, ctx.upSpeed = traffic.Up, traffic.UpSpeed
 	ctx.down, ctx.downSpeed = traffic.Down, traffic.DownSpeed
+	ctx.delay = traffic.Delay
 
 	ctx.next()
 }

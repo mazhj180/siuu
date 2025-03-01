@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"net"
 	"siuu/server/session"
 	"siuu/tunnel/proxy"
 )
@@ -24,15 +25,24 @@ type context struct {
 	session session.Session
 	index   int
 
+	remoteAddr net.Addr
+
+	// handshake
+	handshake bool
+	dst       string
+
 	// route
 	routerName string
 	prxName    string
 	hit        bool
+	rule       string
 
 	// forward
 	err                error
 	up, down           int64
+	upTime, downTime   float64
 	upSpeed, downSpeed float64
+	delay              float64
 }
 
 func (c *context) skip() {

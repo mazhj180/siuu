@@ -7,14 +7,15 @@ import (
 func loggingHandle(ctx *context) {
 	s := ctx.session
 	addr := s.GetConn().RemoteAddr()
-	logger.PDebug("<%s> [scope: handshake] client: [%s] arrival", s.ID(), addr)
-	logger.SInfo("<%s> [scope: handshake] client: [%s] arrival ", s.ID(), addr)
+	ctx.remoteAddr = addr
+	logger.PDebug("<%s> [access] [cli: %s] is arrival", s.ID(), addr)
+	logger.SInfo("<%s> [access] [cli: %s] is arrival ", s.ID(), addr)
 
 	ctx.next()
 
 	sid, pro, host, port, prx := s.ID(), s.GetProtocol(), s.GetHost(), s.GetPort(), s.GetProxy()
 	if ctx.err != nil {
-		logger.SError("<%s> [%s] [%s] to [%s:%d] using by [%s]  err: %s",
+		logger.SError("<%s> [ending] [%s] [%s] to [%s:%d] using by [%s]  err: %s",
 			sid,
 			pro,
 			addr,
@@ -23,14 +24,17 @@ func loggingHandle(ctx *context) {
 			prx.GetName(),
 			ctx.err)
 
-		logger.PError("<%s> connect to [%s:%d] using by [%s] failed", sid, host, port, prx.GetName())
+		logger.PError("<%s> [ending] connect to [%s:%d] used by [%s] failed", sid, host, port, prx.GetName())
 	} else {
-		logger.PInfo("<%s> send to [%s:%d] using by [%s]  [up:%d B | %.2f KB/s] [down:%d B | %.2f KB/s] ",
+		logger.PInfo("<%s> [ending] send to [%s:%d] used by [%s] [router: %s::%s]  [up:%d B | %.2f KB/s] [down:%d B | %.2f KB/s] [delay: %d ms]",
 			sid,
 			host,
 			port,
 			prx.GetName(),
-			ctx.up, ctx.upSpeed/1024, ctx.down, ctx.downSpeed/1024)
-		logger.SInfo("<%s> client: [%s] is dispatching", s.ID(), addr)
+			ctx.routerName,
+			ctx.rule,
+			ctx.up, ctx.upSpeed/1024, ctx.down, ctx.downSpeed/1024,
+			int(ctx.delay*1000),
+		)
 	}
 }

@@ -20,11 +20,11 @@ type Server struct{}
 func (s *Server) Start(_ service.Service) error {
 
 	var serverPort, httpPort, socksPort uint16
-	config.InitConfig(&serverPort, &httpPort, &socksPort)
+	config.InitConfig(&serverPort, &httpPort, &socksPort, service.Interactive())
 
-	go startServer(serverPort)
-	go startHttpProxyServer(httpPort)
-	go startSocksProxyServer(socksPort)
+	go s.startServer(serverPort)
+	go s.startHttpProxyServer(httpPort)
+	go s.startSocksProxyServer(socksPort)
 
 	return nil
 }
@@ -58,7 +58,7 @@ func (s *Server) UninstallConfig() {
 	}
 }
 
-func startServer(port uint16) {
+func (s *Server) startServer(port uint16) {
 	mux := http.NewServeMux()
 	handle.RegisterProxyHandle(mux, "/prx")
 	handle.RegisterRouterHandle(mux, "/route")
@@ -68,7 +68,7 @@ func startServer(port uint16) {
 	}
 }
 
-func startHttpProxyServer(port uint16) {
+func (s *Server) startHttpProxyServer(port uint16) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		panic(fmt.Sprintf("http proxy server start error: %s", err))
@@ -84,7 +84,7 @@ func startHttpProxyServer(port uint16) {
 	}
 }
 
-func startSocksProxyServer(port uint16) {
+func (s *Server) startSocksProxyServer(port uint16) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		panic(fmt.Errorf("socks proxy server start error: %s", err))

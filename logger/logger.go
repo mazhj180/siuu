@@ -29,10 +29,10 @@ const (
 
 var (
 	proxyLogger   *asyncLogger
-	proxyLogLevel = InfoLevel
+	proxyLogLevel = DebugLevel
 
 	systemLogger   *asyncLogger
-	systemLogLevel = InfoLevel
+	systemLogLevel = DebugLevel
 )
 
 type asyncLogger struct {
@@ -131,13 +131,13 @@ func (a *asyncLogger) startWriter() {
 				}
 			}
 			if a.writer != nil {
-				if n, err := a.writer.WriteString(msg + "\n"); err != nil {
+				if n, err := a.writer.WriteString(msg); err != nil {
 					_, _ = os.Stderr.WriteString(fmt.Sprintf("[ERROR] log write wrong : %s\n", err))
 				} else {
 					a.currentSize += n
 				}
 			} else {
-				if n, err := a.file.WriteString(msg + "\n"); err != nil {
+				if n, err := a.file.WriteString(msg); err != nil {
 					_, _ = os.Stderr.WriteString(fmt.Sprintf("[ERROR] log write wrong : %s\n", err))
 				} else {
 					a.currentSize += n
@@ -148,9 +148,9 @@ func (a *asyncLogger) startWriter() {
 			for len(a.logCh) > 0 {
 				msg := <-a.logCh
 				if a.writer != nil {
-					_, _ = a.writer.WriteString(msg + "\n")
+					_, _ = a.writer.WriteString(msg)
 				} else {
-					_, _ = a.file.WriteString(msg + "\n")
+					_, _ = a.file.WriteString(msg)
 				}
 			}
 			if a.writer != nil {
@@ -199,10 +199,10 @@ func PDebug(format string, v ...any) {
 		return
 	}
 	if proxyLogger == nil {
-		_, _ = os.Stdout.WriteString(fmt.Sprintf(timePrefix()+"[Debug]"+format, v...))
+		_, _ = os.Stdout.WriteString(fmt.Sprintf(timePrefix()+"[Debug]"+format+"\n", v...))
 		return
 	}
-	proxyLogger.logCh <- fmt.Sprintf(timePrefix()+"[Debug]"+format, v...)
+	proxyLogger.logCh <- fmt.Sprintf(timePrefix()+"[Debug]"+format+"\n", v...)
 }
 
 func PInfo(format string, v ...any) {
@@ -210,10 +210,10 @@ func PInfo(format string, v ...any) {
 		return
 	}
 	if proxyLogger == nil {
-		_, _ = os.Stdout.WriteString(fmt.Sprintf(timePrefix()+"[Info]"+format, v...))
+		_, _ = os.Stdout.WriteString(fmt.Sprintf(timePrefix()+"[Info]"+format+"\n", v...))
 		return
 	}
-	proxyLogger.logCh <- fmt.Sprintf(timePrefix()+"[Info]"+format, v...)
+	proxyLogger.logCh <- fmt.Sprintf(timePrefix()+"[Info]"+format+"\n", v...)
 }
 
 func PWarn(format string, v ...any) {
@@ -221,10 +221,10 @@ func PWarn(format string, v ...any) {
 		return
 	}
 	if proxyLogger == nil {
-		_, _ = os.Stdout.WriteString(fmt.Sprintf(timePrefix()+"[Warn]"+format, v...))
+		_, _ = os.Stdout.WriteString(fmt.Sprintf(timePrefix()+"[Warn]"+format+"\n", v...))
 		return
 	}
-	proxyLogger.logCh <- fmt.Sprintf(timePrefix()+"[Warn]"+format, v...)
+	proxyLogger.logCh <- fmt.Sprintf(timePrefix()+"[Warn]"+format+"\n", v...)
 }
 
 func PError(format string, v ...any) {
@@ -232,10 +232,10 @@ func PError(format string, v ...any) {
 		return
 	}
 	if proxyLogger == nil {
-		_, _ = os.Stderr.WriteString(fmt.Sprintf(timePrefix()+"[Error]"+format, v...))
+		_, _ = os.Stderr.WriteString(fmt.Sprintf(timePrefix()+"[Error]"+format+"\n", v...))
 		return
 	}
-	proxyLogger.logCh <- fmt.Sprintf(timePrefix()+"[Error]"+format, v...)
+	proxyLogger.logCh <- fmt.Sprintf(timePrefix()+"[Error]"+format+"\n", v...)
 }
 
 func SDebug(format string, v ...any) {
@@ -243,10 +243,10 @@ func SDebug(format string, v ...any) {
 		return
 	}
 	if systemLogger == nil {
-		_, _ = os.Stdout.WriteString(fmt.Sprintf(timePrefix()+"[Debug]"+format, v...))
+		_, _ = os.Stdout.WriteString(fmt.Sprintf(timePrefix()+"[Debug]"+format+"\n", v...))
 		return
 	}
-	systemLogger.logCh <- fmt.Sprintf(timePrefix()+"[Debug]"+format, v...)
+	systemLogger.logCh <- fmt.Sprintf(timePrefix()+"[Debug]"+format+"\n", v...)
 }
 
 func SInfo(format string, v ...any) {
@@ -254,10 +254,10 @@ func SInfo(format string, v ...any) {
 		return
 	}
 	if systemLogger == nil {
-		_, _ = os.Stdout.WriteString(fmt.Sprintf(timePrefix()+"[Info]"+format, v...))
+		_, _ = os.Stdout.WriteString(fmt.Sprintf(timePrefix()+"[Info]"+format+"\n", v...))
 		return
 	}
-	systemLogger.logCh <- fmt.Sprintf(timePrefix()+"[Info]"+format, v...)
+	systemLogger.logCh <- fmt.Sprintf(timePrefix()+"[Info]"+format+"\n", v...)
 }
 
 func SWarn(format string, v ...any) {
@@ -265,10 +265,10 @@ func SWarn(format string, v ...any) {
 		return
 	}
 	if systemLogger == nil {
-		_, _ = os.Stdout.WriteString(fmt.Sprintf(timePrefix()+"[Warn]"+format, v...))
+		_, _ = os.Stdout.WriteString(fmt.Sprintf(timePrefix()+"[Warn]"+format+"\n", v...))
 		return
 	}
-	systemLogger.logCh <- fmt.Sprintf(timePrefix()+"[Warn]"+format, v...)
+	systemLogger.logCh <- fmt.Sprintf(timePrefix()+"[Warn]"+format+"\n", v...)
 }
 
 func SError(format string, v ...any) {
@@ -276,8 +276,8 @@ func SError(format string, v ...any) {
 		return
 	}
 	if systemLogger == nil {
-		_, _ = os.Stderr.WriteString(fmt.Sprintf(timePrefix()+"[Error]"+format, v...))
+		_, _ = os.Stderr.WriteString(fmt.Sprintf(timePrefix()+"[Error]"+format+"\n", v...))
 		return
 	}
-	systemLogger.logCh <- fmt.Sprintf(timePrefix()+"[Error]"+format, v...)
+	systemLogger.logCh <- fmt.Sprintf(timePrefix()+"[Error]"+format+"\n", v...)
 }

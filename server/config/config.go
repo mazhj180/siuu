@@ -10,7 +10,7 @@ import (
 	"siuu/util"
 )
 
-func InitConfig(p1, p2, p3 *uint16) {
+func InitConfig(p1, p2, p3 *uint16, interactive bool) {
 	v := util.CreateConfig("conf", "toml")
 
 	// server
@@ -19,10 +19,12 @@ func InitConfig(p1, p2, p3 *uint16) {
 	*p3 = v.GetUint16(constant.ProxySocksPort)
 
 	// logger
-	logPath := v.GetString(constant.LogDirPath)
-	logPath = util.ExpandHomePath(logPath)
-	logger.InitSystemLog(path.Dir(logPath)+"/system.log", 10*logger.MB, logger.LogLevel(v.GetString(constant.SystemLogLevel)))
-	logger.InitProxyLog(path.Dir(logPath)+"/proxy.log", 1*logger.MB, logger.LogLevel(v.GetString(constant.ProxyLogLevel)))
+	if !interactive {
+		logPath := v.GetString(constant.LogDirPath)
+		logPath = util.ExpandHomePath(logPath)
+		logger.InitSystemLog(path.Dir(logPath)+"/system.log", 10*logger.MB, logger.LogLevel(v.GetString(constant.SystemLogLevel)))
+		logger.InitProxyLog(path.Dir(logPath)+"/proxy.log", 1*logger.MB, logger.LogLevel(v.GetString(constant.ProxyLogLevel)))
+	}
 
 	// proxy
 	constant.Signature = make(map[string]string)

@@ -128,10 +128,10 @@ func NewDefaultRouter(routeFile []string, xdbp string) (*DefaultRouter, error) {
 	return r, nil
 }
 
-func (r *DefaultRouter) Route(host string) (proxy.Proxy, error) {
+func (r *DefaultRouter) Route(host string) (proxy.Proxy, string, error) {
 
 	if p, ok := r.route.exacts[host]; ok {
-		return *p, nil
+		return *p, "exact", nil
 	}
 
 	for k, v := range r.route.wildcards {
@@ -141,36 +141,36 @@ func (r *DefaultRouter) Route(host string) (proxy.Proxy, error) {
 			continue
 		}
 		if host[hl-rl:] == k[1:] {
-			return *v, nil
+			return *v, "wildcard", nil
 		}
 	}
 
 	searcher, err := xdb.NewWithVectorIndex(r.xdbPath, r.ipXdb)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load ip router please check or disable autorouting err: %w", err)
+		return nil, "none", fmt.Errorf("failed to load ip router please check or disable autorouting err: %w", err)
 	}
 
 	ips, err := net.LookupIP(host)
 	if err != nil || len(ips) == 0 {
-		return nil, fmt.Errorf("failed to lookup ip err: %w", err)
+		return nil, "none", fmt.Errorf("failed to lookup ip err: %w", err)
 	}
 	str, err := searcher.SearchByStr(ips[0].String())
 	if err != nil {
-		return nil, fmt.Errorf("failed to search ip router by str err: %w", err)
+		return nil, "none", fmt.Errorf("failed to search ip router by str err: %w", err)
 	}
 
 	for k, v := range r.route.geo {
 		if k[0:1] == "!" {
 			if !strings.Contains(str, k[1:]) {
-				return *v, nil
+				return *v, "geo", nil
 			}
 		}
 		if strings.Contains(str, k) {
-			return *v, nil
+			return *v, "geo", nil
 		}
 	}
 
-	return store.GetSelectedProxy(), nil
+	return nil, "none", fmt.Errorf("no matched route: %s", host)
 }
 
 func (r *DefaultRouter) RelatedRoutes(prx string) string {

@@ -151,15 +151,29 @@ type UdpPocket struct {
 
 // Proxy the abstraction of proxy
 type Proxy interface {
-	// ForwardTcp forwards the traffic of tcp according to the configuration.
-	// It is used to handle the first connection and the first packet from the client.
-	// It will block until the connection is closed.
-	ForwardTcp(*Client) error
-	ForwardUdp(*Client) (*UdpPocket, error)
+
+	// Connect connects to the proxy with the given host and port.
+	// It returns the connection if success, otherwise returns an error.
+	Connect(string, uint16) (net.Conn, error)
+	//Close() error
+	//CloseWriter() error
+	//CloseReader() error
 
 	GetType() Type
 	GetName() string
 	GetServer() string
 	GetPort() uint16
 	GetProtocol() Protocol
+}
+
+type PrxFd struct {
+	conn net.Conn
+}
+
+func (p *PrxFd) Read(b []byte) (n int, err error) {
+	return p.conn.Read(b)
+}
+
+func (p *PrxFd) Write(b []byte) (n int, err error) {
+	return p.conn.Write(b)
 }

@@ -1,61 +1,238 @@
 package tunnel
 
 import (
+	"bytes"
+	"context"
+	"crypto/tls"
+	"errors"
+	"io"
+	"net"
+	"net/http"
+	"siuu/logger"
+	"siuu/tunnel/monitor"
 	"siuu/tunnel/proto"
+	"siuu/tunnel/proxy"
+	"siuu/tunnel/tester"
+	"sync"
+	"time"
 )
 
 var (
-	inCh   chan proto.Interface
-	outCh  chan proto.Interface
-	buffer []proto.Interface
-	T      Tunnel
+	T              Tunnel
+	PingTimeoutErr = errors.New("ping timeout")
 )
 
-func init() {
-	initInfiniteCh()
-	initTunnel()
-	go dispatch()
+type Tunnel interface {
+	In(proto.Interface) (Traffic, error)
+	Interrupt() []string
+	Ping(proxy.Proxy) (Traffic, error)
 }
 
-type Tunnel interface {
-	In(proto.Interface)
-	Out() (proto.Interface, bool)
+func init() {
+	T = &tunnel{
+		livelyConn: make(map[string]net.Conn),
+	}
 }
 
 type tunnel struct {
+	rwx        sync.RWMutex
+	livelyConn map[string]net.Conn
 }
 
-func initTunnel() {
-	T = new(tunnel)
-}
+// In starts a tunnel from the given connection to the given host and port.
+//
+// It first registers the connection to the tunnel, then dials to the proxy.
+// If the dialing fails, it returns immediately.
+//
+// After that, it copies data from the connection to the proxy and from the
+// proxy to the connection. If either of the copies fails, it logs the error
+// and closes the connection.
+//
+// Finally, it records the traffic and logs it.
+func (t *tunnel) In(p proto.Interface) (Traffic, error) {
+	sid := p.ID()
+	host, port, conn, prx := p.GetHost(), p.GetPort(), p.GetConn(), p.GetProxy()
 
-func (t *tunnel) In(v proto.Interface) {
-	inCh <- v
-}
+	t.register(sid, conn)
 
-func (t *tunnel) Out() (proto.Interface, bool) {
-	v, ok := <-outCh
-	return v, ok
-}
+	// dial to proxy
+	timer := monitor.Timer{}
+	timer.Start()
 
-func initInfiniteCh() {
-	buffer = make([]proto.Interface, 0, 10)
-	inCh = make(chan proto.Interface, 10)
-	outCh = make(chan proto.Interface, 1)
+	agency, err := prx.Connect(host, port)
+	if err != nil {
+		return Traffic{}, err
+	}
+	delay := timer.Cost()
+	if prx.GetType() != proxy.TROJAN {
+	}
+	// forward
 
-	go func() {
-		for {
-			if len(buffer) > 0 {
-				select {
-				case outCh <- buffer[0]:
-					buffer = buffer[1:]
-				case v := <-inCh:
-					buffer = append(buffer, v)
-				}
-			} else {
-				v := <-inCh
-				buffer = append(buffer, v)
+	monitored := monitor.Watch(conn)
+
+	if prx.GetType() == proxy.DIRECT {
+		h, ok := p.(proto.HttpInterface)
+		if ok {
+			reader := h.GetHttpReader()
+			if reader != nil {
+				n, _ := io.Copy(agency, reader)
+				monitored.Extra(n, 0)
 			}
 		}
+	}
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		defer Close(agency)
+		defer t.remove(sid)
+		if _, err = io.Copy(agency, monitored); err != nil {
+			logger.SWarn("<%s> %s", sid, err)
+		}
+
 	}()
+
+	if _, err = io.Copy(monitored, agency); err != nil {
+		logger.SWarn("<%s> %s", sid, err)
+	}
+	_ = monitored.CloseWriter()
+
+	<-done
+	_ = monitored.Close()
+	_ = agency.Close()
+
+	// recorded
+	up, upSpeed := monitored.UpTraffic()
+	down, downSpeed := monitored.DownTraffic()
+	upSpend, downSpend := monitored.SpendTime()
+
+	if rt, ok := p.(proto.TrafficRecorder); ok {
+		rt.RecordUp(up, upSpeed)
+		rt.RecordDown(down, downSpeed)
+	}
+
+	tr := Traffic{
+		Up:            up,
+		Down:          down,
+		UpSpendTime:   upSpend,
+		DownSpendTime: downSpend,
+		UpSpeed:       upSpeed,
+		DownSpeed:     downSpeed,
+		Delay:         delay,
+	}
+
+	return tr, err
+
+}
+
+// Interrupt closes all established connections and returns the session ids of
+// the interrupted connections.
+//
+// This function is useful for stopping the tunnel and closing all connections gracefully.
+func (t *tunnel) Interrupt() []string {
+	t.rwx.Lock()
+	defer t.rwx.Unlock()
+	l := len(t.livelyConn)
+	sids := make([]string, l)
+	for sid, conn := range t.livelyConn {
+		_ = conn.Close()
+		sids = append(sids, sid)
+	}
+	t.livelyConn = make(map[string]net.Conn)
+	return sids
+}
+
+func (t *tunnel) Ping(prx proxy.Proxy) (Traffic, error) {
+	req, err := http.NewRequest("GET", "https://github.com", nil)
+	if err != nil {
+		return Traffic{}, err
+	}
+
+	req.Header.Set("Host", "github.com")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36")
+	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
+	req.Header.Set("Accept-Language", "en-US,en;q=0.9")
+	req.Header.Set("Accept-Encoding", "gzip, deflate, br")
+	req.Header.Set("Connection", "keep-alive")
+	req.Header.Set("Upgrade-Insecure-Requests", "1")
+
+	r := proxy.NewHttpReader(req)
+	w := &bytes.Buffer{}
+
+	testConn := &tester.TestConn{
+		Reader: r,
+		Writer: w,
+	}
+	monitored := monitor.Watch(testConn)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	// init timer
+	timer := monitor.Timer{}
+	timer.Start()
+
+	agency, err := prx.Connect("github.com", 433)
+	if err != nil {
+		return Traffic{}, err
+	}
+	delay := timer.Cost()
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		defer Close(agency)
+		_, _ = io.Copy(agency, monitored)
+	}()
+
+	go func() {
+		_, _ = io.Copy(monitored, agency)
+	}()
+
+	var tr Traffic
+	select {
+	case <-done:
+		tr.Up, tr.UpSpeed = monitored.UpTraffic()
+		tr.Down, tr.DownSpeed = monitored.DownTraffic()
+		tr.UpSpendTime, tr.DownSpendTime = monitored.SpendTime()
+		tr.Delay = delay
+	case <-ctx.Done():
+		err = PingTimeoutErr
+	}
+
+	return tr, err
+}
+
+// register records a connection to the tunnel, by the given sid.
+//
+// This function will be called when a connection is established.
+func (t *tunnel) register(sid string, conn net.Conn) {
+	t.rwx.Lock()
+	defer t.rwx.Unlock()
+	t.livelyConn[sid] = conn
+}
+
+func (t *tunnel) remove(sid string) {
+	t.rwx.Lock()
+	defer t.rwx.Unlock()
+	if _, ok := t.livelyConn[sid]; ok {
+		delete(t.livelyConn, sid)
+	}
+}
+
+type Traffic struct {
+	Up, Down                   int64
+	UpSpendTime, DownSpendTime float64
+	UpSpeed, DownSpeed         float64
+
+	Delay float64
+}
+
+func Close(conn net.Conn) {
+	switch c := conn.(type) {
+	case *net.TCPConn:
+		c.CloseWrite()
+	case *tls.Conn:
+		c.CloseWrite()
+	}
 }

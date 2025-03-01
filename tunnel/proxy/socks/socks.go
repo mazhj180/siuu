@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io"
 	"net"
-	"siuu/logger"
 	"siuu/tunnel/proxy"
 	"strconv"
 )
@@ -23,41 +22,37 @@ type Proxy struct {
 	Protocol proxy.Protocol
 }
 
-func (s *Proxy) ForwardTcp(client *proxy.Client) error {
-	conn := client.Conn
-	defer conn.Close()
-
-	addr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(s.Server, strconv.FormatUint(uint64(s.Port), 10)))
+func (s *Proxy) Connect(addr string, port uint16) (net.Conn, error) {
+	tcpAddr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(s.Server, strconv.FormatUint(uint64(s.Port), 10)))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	agency, err := net.DialTCP("tcp", nil, addr)
+	agency, err := net.DialTCP("tcp", nil, tcpAddr)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer agency.Close()
 
 	if err = agency.SetKeepAlive(true); err != nil {
-		return err
+		return nil, err
 	}
 
 	// VER=0x05, NMETHODS=1, METHODS=0x02
 	if _, err = agency.Write([]byte{0x05, 0x01, 0x02}); err != nil {
-		return err
+		return nil, err
 	}
 
 	buf := make([]byte, 2)
 	if _, err = io.ReadFull(agency, buf); err != nil {
-		return err
+		return nil, err
 	}
 
 	if buf[0] != 0x05 {
-		return ErrSocksVerNotSupported
+		return nil, ErrSocksVerNotSupported
 	}
 
 	if buf[1] != 0x02 {
-		return ErrSocksAuthentication
+		return nil, ErrSocksAuthentication
 	}
 
 	// Username/password authentication
@@ -74,17 +69,17 @@ func (s *Proxy) ForwardTcp(client *proxy.Client) error {
 	copy(authMsg[3+len(s.Username):], s.Password)
 
 	if _, err = agency.Write(authMsg); err != nil {
-		return err
+		return nil, err
 	}
 
 	// Read authentication results
 	// ver=0x01, status=0x00 success
 	resp := make([]byte, 2)
 	if _, err = io.ReadFull(agency, resp); err != nil {
-		return err
+		return nil, err
 	}
 	if resp[0] != 0x01 || resp[1] != 0x00 {
-		return ErrSocksAuthentication
+		return nil, ErrSocksAuthentication
 	}
 
 	// After successful authentication, send a CONNECT request to the upstream
@@ -94,8 +89,8 @@ func (s *Proxy) ForwardTcp(client *proxy.Client) error {
 	var addrLen byte
 	portBytes := make([]byte, 2)
 
-	binary.BigEndian.PutUint16(portBytes, uint16(client.Port))
-	ip := net.ParseIP(client.Host)
+	binary.BigEndian.PutUint16(portBytes, port)
+	ip := net.ParseIP(addr)
 
 	if ip4 := ip.To4(); ip4 != nil {
 		atyp = 0x01
@@ -107,23 +102,23 @@ func (s *Proxy) ForwardTcp(client *proxy.Client) error {
 
 	} else {
 		atyp = 0x03
-		addrLen = byte(len(client.Host))
-		addrBytes = append([]byte{addrLen}, []byte(client.Host)...)
+		addrLen = byte(len(addr))
+		addrBytes = append([]byte{addrLen}, []byte(addr)...)
 
 	}
 	connectReq := append([]byte{0x05, 0x01, 0x00, atyp}, append(addrBytes, portBytes...)...)
 	if _, err = agency.Write(connectReq); err != nil {
-		return err
+		return nil, err
 	}
 
 	// Read upstream response
 	// formatting: VER, REP, RSV, ATYP, BND.ADDR, BND.PORT
 	resp = make([]byte, 4)
 	if _, err = io.ReadFull(agency, resp); err != nil {
-		return err
+		return nil, err
 	}
 	if resp[0] != 0x05 {
-		return ErrSocksVerNotSupported
+		return nil, ErrSocksVerNotSupported
 	}
 
 	rep := resp[1]
@@ -137,7 +132,7 @@ func (s *Proxy) ForwardTcp(client *proxy.Client) error {
 	case 0x03:
 		domainLenByte := make([]byte, 1)
 		if _, err = io.ReadFull(agency, domainLenByte); err != nil {
-			return err
+			return nil, err
 		}
 		addrLen = domainLenByte[0]
 
@@ -145,34 +140,20 @@ func (s *Proxy) ForwardTcp(client *proxy.Client) error {
 		addrLen = 16
 
 	default:
-		return proxy.ErrProxyResp
+		return nil, proxy.ErrProxyResp
 	}
 
 	bnd := make([]byte, addrLen+2)
 	if _, err = io.ReadFull(agency, bnd); err != nil {
-		return err
+		return nil, err
 	}
 
 	// According to rep, judge whether the upstream connection is successful
 	if rep != 0x00 {
-		return proxy.ErrProxyResp
+		return nil, proxy.ErrProxyResp
 	}
 
-	go func() {
-		if _, e := io.Copy(agency, conn); e != nil {
-			logger.SWarn("<%s> %s", client.Sid, e)
-		}
-	}()
-
-	if _, err = io.Copy(conn, agency); err != nil {
-		logger.SWarn("<%s> %s", client.Sid, err)
-	}
-
-	return nil
-}
-
-func (s *Proxy) ForwardUdp(client *proxy.Client) (*proxy.UdpPocket, error) {
-	return nil, proxy.ErrProtocolNotSupported
+	return agency, nil
 }
 
 func (s *Proxy) GetName() string {

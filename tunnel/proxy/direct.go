@@ -1,9 +1,7 @@
 package proxy
 
 import (
-	"io"
 	"net"
-	"siuu/logger"
 	"strconv"
 )
 
@@ -15,46 +13,20 @@ type DirectProxy struct {
 	Protocol Protocol
 }
 
-func (d *DirectProxy) ForwardTcp(client *Client) error {
-
-	conn := client.Conn
-	defer conn.Close()
-
-	addr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(client.Host, strconv.FormatUint(uint64(client.Port), 10)))
+func (d *DirectProxy) Connect(addr string, port uint16) (net.Conn, error) {
+	tcpAddr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(addr, strconv.FormatUint(uint64(port), 10)))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	agency, err := net.DialTCP("tcp", nil, addr)
+	agency, err := net.DialTCP("tcp", nil, tcpAddr)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer agency.Close()
-
 	if err = agency.SetKeepAlive(true); err != nil {
-		return err
+		return nil, err
 	}
-
-	go func() {
-		var e error
-		if client.Req != nil {
-			_, e = io.Copy(agency, client.Req)
-		}
-		_, e = io.Copy(agency, conn)
-		if e != nil {
-			logger.SWarn("<%s> %s", client.Sid, e)
-		}
-	}()
-
-	if _, err = io.Copy(conn, agency); err != nil {
-		logger.SWarn("<%s> %s", client.Sid, err)
-	}
-
-	return nil
-}
-
-func (d *DirectProxy) ForwardUdp(client *Client) (*UdpPocket, error) {
-	return nil, ErrProtocolNotSupported
+	return agency, nil
 }
 
 func (d *DirectProxy) GetName() string {

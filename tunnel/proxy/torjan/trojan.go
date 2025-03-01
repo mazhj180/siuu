@@ -6,14 +6,14 @@ import (
 	"crypto/tls"
 	"encoding/binary"
 	"encoding/hex"
-	"io"
 	"net"
-	"siuu/logger"
 	"siuu/tunnel/proxy"
 	"strconv"
 )
 
 type Proxy struct {
+	conn net.Conn
+
 	Type     proxy.Type
 	Name     string
 	Server   string
@@ -23,11 +23,7 @@ type Proxy struct {
 	Sni      string
 }
 
-func (t *Proxy) ForwardTcp(client *proxy.Client) error {
-	conn := client.Conn
-	defer conn.Close()
-
-	// tls handshake
+func (t *Proxy) Connect(addr string, port uint16) (net.Conn, error) {
 	tlsConfig := &tls.Config{
 		ServerName:         t.Sni,
 		InsecureSkipVerify: true,
@@ -35,9 +31,8 @@ func (t *Proxy) ForwardTcp(client *proxy.Client) error {
 
 	agency, err := tls.Dial("tcp", net.JoinHostPort(t.Server, strconv.FormatUint(uint64(t.Port), 10)), tlsConfig)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer agency.Close()
 
 	// trojan handshake
 	hash := sha256.New224()
@@ -45,7 +40,7 @@ func (t *Proxy) ForwardTcp(client *proxy.Client) error {
 	pwd := hex.EncodeToString(hash.Sum(nil))
 	authMsg := pwd + "\r\n"
 	if _, err = agency.Write([]byte(authMsg)); err != nil {
-		return err
+		return nil, err
 	}
 
 	// send connect req
@@ -57,7 +52,7 @@ func (t *Proxy) ForwardTcp(client *proxy.Client) error {
 	var addrLen byte
 	var portBytes = make([]byte, 2)
 
-	ip := net.ParseIP(client.Host)
+	ip := net.ParseIP(addr)
 	if ip4 := ip.To4(); ip4 != nil {
 		atyp = 0x01
 		addrBytes = ip4
@@ -68,37 +63,23 @@ func (t *Proxy) ForwardTcp(client *proxy.Client) error {
 
 	} else {
 		atyp = 0x03
-		addrLen = byte(len(client.Host))
-		addrBytes = append([]byte{addrLen}, []byte(client.Host)...)
+		addrLen = byte(len(addr))
+		addrBytes = append([]byte{addrLen}, []byte(addr)...)
 
 	}
 
 	buf.WriteByte(atyp)
 	buf.Write(addrBytes)
 
-	binary.BigEndian.PutUint16(portBytes, client.Port)
+	binary.BigEndian.PutUint16(portBytes, port)
 	buf.Write(portBytes)
 
 	if _, err = agency.Write(append(buf.Bytes(), []byte{0x0d, 0x0a}...)); err != nil {
-		return err
+		return nil, err
 	}
+	t.conn = agency
 
-	// bidirectional forwarding
-	go func() {
-		if _, e := io.Copy(agency, conn); e != nil {
-			logger.SWarn("<%s> %s", client.Sid, e)
-		}
-	}()
-
-	if _, err = io.Copy(conn, agency); err != nil {
-		logger.SWarn("<%s> %s", client.Sid, err)
-	}
-
-	return nil
-}
-
-func (t *Proxy) ForwardUdp(client *proxy.Client) (*proxy.UdpPocket, error) {
-	return nil, proxy.ErrProtocolNotSupported
+	return agency, nil
 }
 
 func (t *Proxy) GetName() string {

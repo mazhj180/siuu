@@ -10,12 +10,12 @@ import (
 	"os"
 	"siuu/logger"
 	"siuu/server/config/constant"
+	"siuu/tunnel"
 	"siuu/tunnel/proxy"
 	"siuu/tunnel/proxy/http"
 	"siuu/tunnel/proxy/shadow"
 	"siuu/tunnel/proxy/socks"
 	"siuu/tunnel/proxy/torjan"
-	"siuu/tunnel/tester"
 	"strconv"
 	"strings"
 	"sync"
@@ -234,11 +234,36 @@ func GetSelectedProxy() proxy.Proxy {
 }
 
 func TestProxyConnection(proxies []proxy.Proxy) map[string]float64 {
-	t := tester.NewTester("https://github.com/", "github.com", proxies)
-	t.Test()
-	res, err := t.GetResult()
-	if err != nil {
-		return nil
+	n := len(proxies)
+	traf := make(chan *testRes, n)
+
+	var wg sync.WaitGroup
+	wg.Add(n)
+	for i := range proxies {
+		go func() {
+			defer wg.Done()
+			if tr, err := tunnel.T.Ping(proxies[i]); err == nil {
+				traf <- &testRes{delay: tr.Delay, prx: proxies[i].GetName()}
+			} else if errors.Is(err, tunnel.PingTimeoutErr) {
+				traf <- &testRes{delay: -1, prx: proxies[i].GetName()} // timeout
+			} else {
+				traf <- &testRes{delay: -2, prx: proxies[i].GetName()} // error
+			}
+		}()
 	}
+
+	wg.Wait()
+	close(traf)
+
+	res := make(map[string]float64, n)
+	for t := range traf {
+		res[t.prx] = t.delay
+	}
+
 	return res
+}
+
+type testRes struct {
+	prx   string
+	delay float64
 }

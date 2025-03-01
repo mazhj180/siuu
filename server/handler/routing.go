@@ -18,6 +18,7 @@ func routeHandle(ctx *context) {
 			logger.SDebug("<%s> client routing using by [%s] router", s.ID(), r.Name())
 			s.SetProxy(prx)
 		}
+		ctx.routerName = r.Name()
 	}
 	ctx.next()
 }

@@ -3,9 +3,7 @@ package shadow
 import (
 	"encoding/binary"
 	"github.com/shadowsocks/go-shadowsocks2/core"
-	"io"
 	"net"
-	"siuu/logger"
 	"siuu/tunnel/proxy"
 	"strconv"
 )
@@ -20,29 +18,30 @@ type Proxy struct {
 	Protocol proxy.Protocol
 }
 
-func (s *Proxy) ForwardTcp(client *proxy.Client) error {
-	conn := client.Conn
-	defer conn.Close()
-
-	agency, err := net.Dial("tcp", net.JoinHostPort(s.Server, strconv.FormatUint(uint64(s.Port), 10)))
+func (s *Proxy) Connect(addr string, port uint16) (net.Conn, error) {
+	tcpAddr, err := net.ResolveTCPAddr("tcp", net.JoinHostPort(s.Server, strconv.FormatUint(uint64(s.Port), 10)))
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer agency.Close()
+
+	agency, err := net.DialTCP("tcp", nil, tcpAddr)
+	if err != nil {
+		return nil, err
+	}
 
 	cipher, err := core.PickCipher(s.Cipher, nil, s.Password)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	agency = cipher.StreamConn(agency)
+	agency = cipher.StreamConn(agency).(*net.TCPConn)
 
 	var atyp byte
 	var addrBytes []byte
 	var addrLen byte
 	portBytes := make([]byte, 2)
 
-	binary.BigEndian.PutUint16(portBytes, uint16(client.Port))
-	ip := net.ParseIP(client.Host)
+	binary.BigEndian.PutUint16(portBytes, port)
+	ip := net.ParseIP(addr)
 
 	if ip4 := ip.To4(); ip4 != nil {
 		atyp = 0x01
@@ -54,8 +53,8 @@ func (s *Proxy) ForwardTcp(client *proxy.Client) error {
 
 	} else {
 		atyp = 0x03
-		addrLen = byte(len(client.Host))
-		addrBytes = append([]byte{addrLen}, []byte(client.Host)...)
+		addrLen = byte(len(addr))
+		addrBytes = append([]byte{addrLen}, []byte(addr)...)
 
 	}
 
@@ -65,24 +64,9 @@ func (s *Proxy) ForwardTcp(client *proxy.Client) error {
 	req = append(req, portBytes...)
 
 	if _, err = agency.Write(req); err != nil {
-		return err
+		return nil, err
 	}
-
-	go func() {
-		if _, e := io.Copy(agency, conn); e != nil {
-			logger.SWarn("<%s> %s", client.Sid, e)
-		}
-	}()
-
-	if _, err = io.Copy(conn, agency); err != nil {
-		logger.SWarn("<%s> %s", client.Sid, err)
-	}
-
-	return nil
-}
-
-func (s *Proxy) ForwardUdp(client *proxy.Client) (*proxy.UdpPocket, error) {
-	return nil, proxy.ErrProtocolNotSupported
+	return agency, nil
 }
 
 func (s *Proxy) GetName() string {

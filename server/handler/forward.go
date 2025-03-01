@@ -6,6 +6,15 @@ import (
 
 func forwardHandle(ctx *context) {
 	s := ctx.session
-	tunnel.T.In(s)
+
+	traffic, err := tunnel.T.In(s)
+	if err != nil {
+		ctx.err = err
+		return
+	}
+
+	ctx.up, ctx.upSpeed = traffic.Up, traffic.UpSpeed
+	ctx.down, ctx.downSpeed = traffic.Down, traffic.DownSpeed
+
 	ctx.next()
 }

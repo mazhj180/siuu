@@ -1,15 +1,19 @@
 package monitor
 
 import (
+	"errors"
 	"net"
 	"time"
 )
 
 type Interface interface {
 	net.Conn
+	CloseWriter() error
+	CloseReader() error
 	UpTraffic() (int64, float64)
 	DownTraffic() (int64, float64)
 	SpendTime() (float64, float64)
+	Extra(int64, int64)
 }
 
 func Watch(conn net.Conn, initValues ...int64) Interface {
@@ -32,6 +36,20 @@ type monitor struct {
 	down      int64
 	upTimer   Timer
 	downTimer Timer
+}
+
+func (m *monitor) CloseWriter() error {
+	if conn, ok := m.Conn.(*net.TCPConn); ok {
+		return conn.CloseWrite()
+	}
+	return errors.New("it is not tcp conn")
+}
+
+func (m *monitor) CloseReader() error {
+	if conn, ok := m.Conn.(*net.TCPConn); ok {
+		return conn.CloseRead()
+	}
+	return errors.New("it is not tcp conn")
 }
 
 func (m *monitor) Write(b []byte) (int, error) {
@@ -74,6 +92,11 @@ func (m *monitor) SpendTime() (up, down float64) {
 	return
 }
 
+func (m *monitor) Extra(up, down int64) {
+	m.up += up
+	m.down += down
+}
+
 type Timer struct {
 	startTime time.Time
 	duration  time.Duration
@@ -93,5 +116,8 @@ func (t *Timer) Stop() {
 }
 
 func (t *Timer) Cost() float64 {
+	if !t.startTime.IsZero() {
+		return time.Since(t.startTime).Seconds()
+	}
 	return t.duration.Seconds()
 }

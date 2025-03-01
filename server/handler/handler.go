@@ -1,19 +1,12 @@
 package handler
 
 import (
-	"net"
 	"siuu/server/session"
 	"siuu/tunnel/proxy"
 )
 
 var (
-	handlers        []handle
-	privateIPBlocks = []net.IPNet{
-		{IP: net.IPv4(10, 0, 0, 0), Mask: net.CIDRMask(8, 32)},
-		{IP: net.IPv4(172, 16, 0, 0), Mask: net.CIDRMask(12, 32)},
-		{IP: net.IPv4(192, 168, 0, 0), Mask: net.CIDRMask(16, 32)},
-		{IP: net.IPv4(127, 0, 0, 0), Mask: net.CIDRMask(8, 32)}, // 本地回环
-	}
+	handlers []handle
 )
 
 func init() {
@@ -30,6 +23,16 @@ type handle func(*context)
 type context struct {
 	session session.Session
 	index   int
+
+	// route
+	routerName string
+	prxName    string
+	hit        bool
+
+	// forward
+	err                error
+	up, down           int64
+	upSpeed, downSpeed float64
 }
 
 func (c *context) skip() {

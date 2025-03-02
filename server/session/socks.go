@@ -13,19 +13,17 @@ type socksSession struct {
 	id                 string
 	conn               net.Conn
 	prx                proxy.Proxy
-	addr               *Addr
+	addr               Addr
 	up, down           int64
 	upSpeed, downSpeed float64
 }
 
 func OpenSocksSession(conn net.Conn) Session {
 	sid := "s-" + genSid()
-	addr := &Addr{}
 	return &socksSession{
 		id:   sid,
 		conn: conn,
 		prx:  store.GetDirect(),
-		addr: addr,
 	}
 }
 

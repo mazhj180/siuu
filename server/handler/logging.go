@@ -13,6 +13,10 @@ func loggingHandle(ctx *context) {
 
 	ctx.next()
 
+	if !ctx.handshake {
+		return
+	}
+
 	sid, pro, host, port, prx := s.ID(), s.GetProtocol(), s.GetHost(), s.GetPort(), s.GetProxy()
 	if ctx.err != nil {
 		logger.SError("<%s> [ending] [%s] [%s] to [%s:%d] using by [%s]  err: %s",

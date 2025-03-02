@@ -17,7 +17,7 @@ type httpSession struct {
 	conn               net.Conn
 	reader             *proxy.HttpReader
 	isTLS              bool
-	addr               *Addr
+	addr               Addr
 	id                 string
 	up, down           int64
 	upSpeed, downSpeed float64
@@ -47,7 +47,7 @@ func (s *httpSession) Handshakes() error {
 		domain = req.Host
 	}
 
-	s.addr = &Addr{
+	s.addr = Addr{
 		Domain: domain,
 		Port:   uint16(port),
 	}

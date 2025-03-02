@@ -13,6 +13,7 @@ func handshakeHandle(ctx *context) {
 		logger.SError("<%s> [handshake] [cli: %s] handshakes was failed; err: %s", s.ID(), ctx.remoteAddr, err)
 		return
 	}
+	ctx.handshake = true
 
 	host := s.GetHost()
 	port := s.GetPort()

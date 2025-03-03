@@ -38,10 +38,27 @@ func main() {
 	if len(os.Args) > 1 {
 		cmd := os.Args[1]
 		if strings.EqualFold(cmd, "install") {
-			log.Println("InstallConfig() method called.")
+			_, _ = fmt.Fprintf(os.Stdout, "Warn: after installation, do not arbitrarily move the program location.\n")
+			_, _ = fmt.Fprintf(os.Stdout, "are you sure you want to install? (y/n)\n")
+
+			var f string
+			_, _ = fmt.Scanln(&f)
+			if !strings.EqualFold(f, "y") {
+				return
+			}
+
 			siuu.InstallConfig()
 		}
 		if strings.EqualFold(cmd, "uninstall") {
+			_, _ = fmt.Fprintf(os.Stdout, "Warn: after uninstallation, all of your configurations will be cleared.\n")
+			_, _ = fmt.Fprintf(os.Stdout, "are you sure you want to uninstall? (y/n)\n")
+
+			var f string
+			_, _ = fmt.Scanln(&f)
+			if !strings.EqualFold(f, "y") {
+				return
+			}
+
 			siuu.UninstallConfig()
 		}
 		err = service.Control(s, cmd)

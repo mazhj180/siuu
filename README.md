@@ -5,6 +5,7 @@
 
 **there are no any proxy serve, "siuu" is just a local proxy app**
 
+**notice** :`siuucli is deprecated, please use` [siuu-alfredworkflow](https://github.com/mazhj180/siuu-alfredworkflow.git)  `instead`
 
 ## About
 - it implemented http/https, socks5, shadowsocks and trojan proxies now. 
@@ -26,7 +27,7 @@ the best version of golang is 1.23.0
 **run it as a daemon service**
 ```bash
 
-git clone https://github.com/siuu/siuu.git # download the source code
+git clone https://github.com/mazhj180/siuu.git # download the source code
 cd siuu # come to the source code directory
 go build -o siuu . # build the source code
 # you can move the app to anywhere before you run command "siuu install"
@@ -48,7 +49,7 @@ the app will create a directory named ".siuu" in your home directory, when it is
 there are some files or dir in the directory:
 - conf/: the init configuration file of siuu
 - log/: the log file of siuu
-- siuucli: the cli tool of siuu
+- siuucli: the cli tool of siuu (Deprecated)
 - siuu: the app of siuu
 
 ### How to config?
@@ -156,6 +157,6 @@ geo = [
 ### How to start it?
 
 ```bash
-./siuucli proxy on/off    # turn on/off the global proxy
+./siuucli proxy on/off # (Deprecated)    turn on/off the global proxy 
 ./siuu start/stop      # start/stop the app
 ```

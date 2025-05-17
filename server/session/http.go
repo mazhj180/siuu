@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"siuu/server/store"
+	"siuu/server/config/proxies"
 	"siuu/tunnel/proto"
 	"siuu/tunnel/proxy"
 	"strconv"
@@ -28,7 +28,7 @@ func OpenHttpSession(conn net.Conn) Session {
 	return &httpSession{
 		conn: conn,
 		id:   sid,
-		prx:  store.GetDirect(),
+		prx:  proxies.GetDirect(),
 	}
 }
 

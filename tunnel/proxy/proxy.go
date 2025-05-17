@@ -140,7 +140,7 @@ type Client struct {
 
 	IsTLS bool // whether the traffic is tls encrypted.
 
-	// store some data that needs to be written before the bidirectional copy.
+	// proxies some data that needs to be written before the bidirectional copy.
 	// example: the data that has been read out from the connection in http request
 	Req *HttpReader
 }

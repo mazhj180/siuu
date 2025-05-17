@@ -27,6 +27,7 @@ const (
 	RouteConfigPath       = "router.path.table"
 	RouteXdbPath          = "router.path.xdb"
 	ProxiesConfigPath     = "proxy.path"
+	EnablePProf           = "pprof.enable"
 )
 
 var (

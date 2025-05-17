@@ -53,6 +53,7 @@ func Refresh(routePath []string, xdbPath string) error {
 	rwx.Lock()
 	defer rwx.Unlock()
 	router = r
-	tunnel.T.Interrupt()
+	conns := tunnel.T.Interrupt()
+	logger.SInfo("refresh route table interrupt all of conn in live ; sids : %v", conns)
 	return nil
 }

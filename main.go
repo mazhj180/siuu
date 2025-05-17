@@ -27,7 +27,7 @@ func main() {
 		},
 	}
 
-	siuu := &server.Server{}
+	siuu := server.Srv
 	s, err := service.New(siuu, conf)
 	if err != nil {
 		panic(err)

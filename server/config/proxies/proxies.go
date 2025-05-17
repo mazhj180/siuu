@@ -1,4 +1,4 @@
-package store
+package proxies
 
 import (
 	"crypto/sha256"

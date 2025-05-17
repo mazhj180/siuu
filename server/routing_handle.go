@@ -1,4 +1,4 @@
-package handle
+package server
 
 import (
 	"net/http"
@@ -7,9 +7,9 @@ import (
 	"siuu/util"
 )
 
-func RegisterRouterHandle(mux *http.ServeMux, prefix string) {
-	mux.HandleFunc(prefix+"/refresh", refreshRouter)
-	mux.HandleFunc(prefix+"/routes", getRelatedRoutes)
+func RegisterRouterHandle(prefix string) {
+	Srv.Mux.HandleFunc(prefix+"/refresh", refreshRouter)
+	Srv.Mux.HandleFunc(prefix+"/routes", getRelatedRoutes)
 }
 
 func refreshRouter(w http.ResponseWriter, r *http.Request) {

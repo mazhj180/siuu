@@ -2,8 +2,8 @@ package handler
 
 import (
 	"siuu/logger"
+	"siuu/server/config/proxies"
 	"siuu/server/handler/routing"
-	"siuu/server/store"
 )
 
 func routeHandle(ctx *context) {
@@ -15,7 +15,7 @@ func routeHandle(ctx *context) {
 		prx, rule, err := r.Route(host)
 		if err != nil {
 			logger.SWarn("<%s> [routing] route failed: %s", s.ID(), err)
-			s.SetProxy(store.GetSelectedProxy())
+			s.SetProxy(proxies.GetSelectedProxy())
 		} else {
 			logger.SDebug("<%s> [routing] matched [%s] to [%s] by [%s::%s]", s.ID(), ctx.dst, prx.GetName(), r.Name(), rule)
 			s.SetProxy(prx)

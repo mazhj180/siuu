@@ -3,7 +3,7 @@ package test
 import (
 	"encoding/json"
 	"fmt"
-	"siuu/server/store"
+	"siuu/server/config/proxies"
 	"siuu/tunnel/proxy/torjan"
 	"testing"
 )
@@ -26,7 +26,7 @@ func TestAddPrx(t *testing.T) {
 		t.Error(err)
 	}
 
-	for _, v := range store.GetProxies() {
+	for _, v := range proxies.GetProxies() {
 		fmt.Println(v)
 	}
 

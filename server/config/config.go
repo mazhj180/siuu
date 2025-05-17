@@ -5,18 +5,19 @@ import (
 	"path"
 	"siuu/logger"
 	"siuu/server/config/constant"
+	"siuu/server/config/proxies"
 	"siuu/server/handler/routing"
-	"siuu/server/store"
 	"siuu/util"
 )
 
-func InitConfig(p1, p2, p3 *uint16, interactive bool) {
+func InitConfig(interactive bool) (p1, p2, p3 uint16, enablePprof bool) {
 	v := util.CreateConfig("conf", "toml")
 
 	// server
-	*p1 = v.GetUint16(constant.ServerPort)
-	*p2 = v.GetUint16(constant.ProxyHttpPort)
-	*p3 = v.GetUint16(constant.ProxySocksPort)
+	p1 = v.GetUint16(constant.ServerPort)
+	p2 = v.GetUint16(constant.ProxyHttpPort)
+	p3 = v.GetUint16(constant.ProxySocksPort)
+	enablePprof = v.GetBool(constant.EnablePProf)
 
 	// logger
 	if !interactive {
@@ -34,7 +35,7 @@ func InitConfig(p1, p2, p3 *uint16, interactive bool) {
 		val := util.ExpandHomePath(p)
 		prxPathC = append(prxPathC, val)
 	}
-	store.InitProxy(prxPathC)
+	proxies.InitProxy(prxPathC)
 
 	// router
 	if v.GetBool(constant.RouterEnabled) {
@@ -48,6 +49,7 @@ func InitConfig(p1, p2, p3 *uint16, interactive bool) {
 		xdbPath = util.ExpandHomePath(xdbPath)
 		routing.InitRouter(routePathC, xdbPath)
 	}
+	return
 }
 
 func BuildConfiguration(root string) error {

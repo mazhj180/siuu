@@ -1,16 +1,17 @@
-package handle
+package server
 
 import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"siuu/server/store"
+	ps "siuu/server/config/proxies"
 	"siuu/tunnel/proxy"
 	"siuu/util/pinyin"
 	"strings"
 )
 
-func RegisterProxyHandle(mux *http.ServeMux, prefix string) {
+func RegisterProxyHandle(prefix string) {
+	mux := Srv.Mux
 	mux.HandleFunc(prefix, getProxies)
 	mux.HandleFunc(prefix+"/add", addProxy)
 	mux.HandleFunc(prefix+"/remove", removeProxy)
@@ -18,6 +19,7 @@ func RegisterProxyHandle(mux *http.ServeMux, prefix string) {
 	mux.HandleFunc(prefix+"/set", setDefaultProxy)
 	mux.HandleFunc(prefix+"/get-default", getDefaultProxy)
 	mux.HandleFunc(prefix+"/delay", testDelay)
+
 }
 
 func addProxy(w http.ResponseWriter, r *http.Request) {
@@ -33,7 +35,7 @@ func addProxy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = store.AddProxies(proxies...); err != nil {
+	if err = ps.AddProxies(proxies...); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -51,7 +53,7 @@ func removeProxy(w http.ResponseWriter, r *http.Request) {
 	for _, name := range strings.Split(params, ",") {
 		names = append(names, name)
 	}
-	store.RemoveProxies(names...)
+	ps.RemoveProxies(names...)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -62,7 +64,7 @@ func getProxy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err := json.Marshal(store.GetProxy(query.Get("prx")))
+	data, err := json.Marshal(ps.GetProxy(query.Get("prx")))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -76,7 +78,7 @@ func getProxy(w http.ResponseWriter, r *http.Request) {
 
 func getProxies(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
-	proxies := store.GetProxies()
+	proxies := ps.GetProxies()
 
 	if query.Has("prx") {
 		proxies = proxies[1:]
@@ -89,9 +91,9 @@ func getProxies(w http.ResponseWriter, r *http.Request) {
 		names = pinyin.FuzzyMatch(names, prx)
 		proxies = make([]proxy.Proxy, len(names))
 		for i := range names {
-			proxies[i] = store.GetProxy(names[i])
+			proxies[i] = ps.GetProxy(names[i])
 		}
-		proxies = append([]proxy.Proxy{store.GetSelectedProxy()}, proxies...)
+		proxies = append([]proxy.Proxy{ps.GetSelectedProxy()}, proxies...)
 	}
 
 	data, err := json.Marshal(proxies)
@@ -112,7 +114,7 @@ func setDefaultProxy(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	err := store.SetSelectedProxy(query.Get("proxy"))
+	err := ps.SetSelectedProxy(query.Get("proxy"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte(err.Error()))
@@ -123,7 +125,7 @@ func setDefaultProxy(w http.ResponseWriter, r *http.Request) {
 }
 
 func getDefaultProxy(w http.ResponseWriter, r *http.Request) {
-	prx := store.GetSelectedProxy()
+	prx := ps.GetSelectedProxy()
 	if _, err := w.Write([]byte(prx.GetName())); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
@@ -131,7 +133,7 @@ func getDefaultProxy(w http.ResponseWriter, r *http.Request) {
 
 func testDelay(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
-	proxies := store.GetProxies()
+	proxies := ps.GetProxies()
 
 	if query.Has("prx") {
 		proxies = proxies[1:]
@@ -144,12 +146,12 @@ func testDelay(w http.ResponseWriter, r *http.Request) {
 		names = pinyin.FuzzyMatch(names, prx)
 		proxies = make([]proxy.Proxy, len(names))
 		for i := range names {
-			proxies[i] = store.GetProxy(names[i])
+			proxies[i] = ps.GetProxy(names[i])
 		}
-		proxies = append([]proxy.Proxy{store.GetSelectedProxy()}, proxies...)
+		proxies = append([]proxy.Proxy{ps.GetSelectedProxy()}, proxies...)
 	}
 
-	res := store.TestProxyConnection(proxies)
+	res := ps.TestProxyConnection(proxies)
 	bytes, err := json.Marshal(res)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

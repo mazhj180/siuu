@@ -10,7 +10,7 @@ import (
 	"os"
 	"siuu/logger"
 	"siuu/server/config/constant"
-	"siuu/server/store"
+	"siuu/server/config/proxies"
 	"siuu/tunnel/proxy"
 	"siuu/util"
 	"strings"
@@ -84,7 +84,7 @@ func NewDefaultRouter(routeFile []string, xdbp string) (*DefaultRouter, error) {
 			val = strings.TrimSpace(val)
 			kvs := strings.Split(val, ",")
 
-			prx := store.GetProxyPointer(kvs[1])
+			prx := proxies.GetProxyPointer(kvs[1])
 			if prx == nil {
 				_, _ = os.Stdout.WriteString(fmt.Sprintf("failed to get proxy: %s\n", kvs[1]))
 				continue
@@ -97,7 +97,7 @@ func NewDefaultRouter(routeFile []string, xdbp string) (*DefaultRouter, error) {
 			val = strings.TrimSpace(val)
 			kvs := strings.Split(val, ",")
 
-			prx := store.GetProxyPointer(kvs[1])
+			prx := proxies.GetProxyPointer(kvs[1])
 			if prx == nil {
 				_, _ = os.Stdout.WriteString(fmt.Sprintf("failed to get proxy: %s\n", kvs[1]))
 				continue
@@ -110,7 +110,7 @@ func NewDefaultRouter(routeFile []string, xdbp string) (*DefaultRouter, error) {
 			val = strings.TrimSpace(val)
 			kvs := strings.Split(val, ",")
 
-			prx := store.GetProxyPointer(kvs[1])
+			prx := proxies.GetProxyPointer(kvs[1])
 			if prx == nil {
 				_, _ = os.Stdout.WriteString(fmt.Sprintf("failed to get proxy: %s\n", kvs[1]))
 				continue

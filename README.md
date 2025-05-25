@@ -57,34 +57,64 @@ there are some files or dir in the directory:
 **init configuration file:**
 ```toml
 # you don't need to edit the init configuration file 
+
+# Log configuration
 [log]
-path = "./siuu/log/" # log path; no change recommended
-level.system = "DEBUG" # system log level
-level.proxy = "INFO"   # proxy log level
 
+# - path: log file path, using '~' means the home directory of user
+# - level.system: log level of system, including error, warn, info, debug
+# - level.proxy: log level of proxy, including  error, warn, info, debug
+path = '~/.siuu/log/'
+level.system = 'DEBUG'
+level.proxy = 'INFO'
+
+
+
+# Server configuration
 [server]
-port = 17777        # server listen port
-http.port = 18888   # http proxy listen port
-socks.port = 19999  # socks5 proxy listen port
 
-# routing related configurations
-[router]
-enable = true       # whether to turn on the router 
-path.table = [      # routing table config file path
+# - port: the main port on which the server listens for control command connections
+# - http.port: the port dedicated for HTTP proxy connections
+# - socks.port: the port dedicated for SOCKS5 proxy connections
+port = 17777
+http.port = 18888
+socks.port = 19999
+
+
+# - model: proxy model, including NORMAL, TUN. The default value is NORMAL
+proxy.model = "NORMAL"
+
+
+# listens for pprof ,the port is 6060
+[server.pprof]
+enable = false
+
+
+
+# If you want match the rules, you need to configure the router and proxy
+# the router section is [rule.router] and all the other configuration what about the router,
+# must be in the router section, for example, [path.table] and [path.xdb]
+# the proxy section is [rule.proxy]
+[rule]
+enable = true
+
+[rule.route]
+path = [
     '~/.siuu/conf/proxies.toml',
 ]
 
-path.xdb = '~/.siuu/conf/ip2region.xdb'     # xdb file path
+xdb = '~/.siuu/conf/ip2region.xdb'
 
-[proxy]
+# Proxy related configuration
+[rule.proxy]
 path = [
-    '~/.siuu/conf/proxies.toml'      # proxy config file path
+    '~/.siuu/conf/proxies.toml'
 ]
 ```
 
 **proxies and routing table configuration file:**
 ```toml
-# proxy config
+# proxy config ('~/.siuu/conf/proxies.toml')
 [proxy]
 # You can add your proxies here
 # Support proxy protocol: http/https, socks5, shadowsocks, trojan
@@ -98,7 +128,10 @@ proxies = [
     "trojan,xxxx,xxxxxxxx.com,8080,xxxxxxxxxxxxxxxx,xxxxxxxxx,tcp",
 ]
 
-
+# proxy alias
+alias = [
+    "name:[ALADASD, adasdaw, sadasd, asdawdq, asdawd]",
+]
 
 
 # route table config
@@ -111,46 +144,19 @@ proxies = [
 
 # If you want to use the default proxy,you can set the proxy name to default.
 # You can set the default proxy as you like
-# eg : [xxxxx],default
+# eg : [type],[xxxxx],default
 
-# exact match rules
-# Example: [domain],[proxy name]
-exacts = [
+# Example: [type],[domain],[proxy name/alias]
+rules = [
 
     # bing
-    "www.cn.bing.com,direct",
-    "cn.bing.com,direct",
-
-    # openai chatgpt
-    "openai.com,xxxxx",
-    "chat.openai.com,xxxxx",
-    "www.openai.com,xxxxxxx",
-    "ios.chat.openai.com,xxxxx",
-    "ab.chatgpt.com,xxxxxx",
+    "excat,www.cn.bing.com,direct",
+    "excat,cn.bing.com,direct",
 
     # github
-    "github.com,xxxxx",
+    "excat,github.com,xxxxx",
+    "wildcard,*.github.com,xxxxx",
 
-    # google
-    "www.google.com,default",
-    "google.com,default",
-    "imap.gmail.com,default", 
-    "content-autofill.googleapis.com,default",
-
-]
-
-
-# wildcard match rules
-# Example: [*domain],[proxy name]
-wildcards = [
-    "*github.com,default",
-    "*cn,direct",
-]
-
-# geo match rules
-# Example: [country/region/city],[proxy name]
-geo = [
-    "新加坡,xxxxx",
 ]
 ```
 

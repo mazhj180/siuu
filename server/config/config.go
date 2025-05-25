@@ -5,19 +5,32 @@ import (
 	"path"
 	"siuu/logger"
 	"siuu/server/config/constant"
-	"siuu/server/config/proxies"
-	"siuu/server/handler/routing"
 	"siuu/util"
 )
 
-func InitConfig(interactive bool) (p1, p2, p3 uint16, enablePprof bool) {
+type Config struct {
+	ServerPort     uint16
+	HttpProxyPort  uint16
+	SocksProxyPort uint16
+	EnablePProf    bool
+	EnabledRule    bool
+	Model          constant.Model
+}
+
+func InitConfig(interactive bool) Config {
 	v := util.CreateConfig("conf", "toml")
 
 	// server
-	p1 = v.GetUint16(constant.ServerPort)
-	p2 = v.GetUint16(constant.ProxyHttpPort)
-	p3 = v.GetUint16(constant.ProxySocksPort)
-	enablePprof = v.GetBool(constant.EnablePProf)
+	p1 := v.GetUint16(constant.ServerPort)
+	p2 := v.GetUint16(constant.ProxyHttpPort)
+	p3 := v.GetUint16(constant.ProxySocksPort)
+	enablePprof := v.GetBool(constant.EnablePProf)
+
+	prxModel := v.GetString(constant.ProxyModel)
+	model := constant.NORMAL
+	if prxModel == "TUN" {
+		model = constant.TUN
+	}
 
 	// logger
 	if !interactive {
@@ -27,29 +40,17 @@ func InitConfig(interactive bool) (p1, p2, p3 uint16, enablePprof bool) {
 		logger.InitProxyLog(path.Dir(logPath)+"/proxy.log", 1*logger.MB, logger.LogLevel(v.GetString(constant.ProxyLogLevel)))
 	}
 
-	// proxy
-	constant.Signature = make(map[string]string)
-	prxPath := v.GetStringSlice(constant.ProxiesConfigPath)
-	var prxPathC []string
-	for _, p := range prxPath {
-		val := util.ExpandHomePath(p)
-		prxPathC = append(prxPathC, val)
-	}
-	proxies.InitProxy(prxPathC)
+	// rule
+	enabledRule := v.GetBool(constant.RuleEnabled)
 
-	// router
-	if v.GetBool(constant.RouterEnabled) {
-		routePath := v.GetStringSlice(constant.RouteConfigPath)
-		var routePathC []string
-		for _, r := range routePath {
-			val := util.ExpandHomePath(r)
-			routePathC = append(routePathC, val)
-		}
-		xdbPath := v.GetString(constant.RouteXdbPath)
-		xdbPath = util.ExpandHomePath(xdbPath)
-		routing.InitRouter(routePathC, xdbPath)
+	return Config{
+		ServerPort:     p1,
+		HttpProxyPort:  p2,
+		SocksProxyPort: p3,
+		EnablePProf:    enablePprof,
+		EnabledRule:    enabledRule,
+		Model:          model,
 	}
-	return
 }
 
 func BuildConfiguration(root string) error {

@@ -65,10 +65,8 @@ func (t *tunnel) In(p proto.Interface) (Traffic, error) {
 		return Traffic{}, err
 	}
 	delay := timer.Cost()
-	if prx.GetType() != proxy.TROJAN {
-	}
-	// forward
 
+	// forward
 	monitored := monitor.Watch(conn)
 
 	if prx.GetType() == proxy.DIRECT {
@@ -133,16 +131,28 @@ func (t *tunnel) In(p proto.Interface) (Traffic, error) {
 func (t *tunnel) Interrupt() []string {
 	t.rwx.Lock()
 	defer t.rwx.Unlock()
+
 	l := len(t.livelyConn)
 	sids := make([]string, l)
 	for sid, conn := range t.livelyConn {
 		_ = conn.Close()
 		sids = append(sids, sid)
 	}
+
 	t.livelyConn = make(map[string]net.Conn)
 	return sids
 }
 
+// Ping pings the given proxy and returns the traffic.
+//
+// It first creates a test connection, then dials to the proxy.
+// If the dialing fails, it returns immediately.
+//
+// After that, it copies data from the test connection to the proxy and from the
+// proxy to the test connection. If either of the copies fails, it logs the error
+// and closes the connection.
+//
+// Finally, it records the traffic and logs it.
 func (t *tunnel) Ping(prx proxy.Proxy) (Traffic, error) {
 	host := "github.com"
 	if prx.GetType() == proxy.DIRECT {

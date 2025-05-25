@@ -4,6 +4,7 @@ import (
 	"net"
 	"siuu/server/session"
 	"siuu/tunnel/proxy"
+	"siuu/tunnel/routing"
 )
 
 var (
@@ -22,6 +23,8 @@ func init() {
 type handle func(*context)
 
 type context struct {
+	router routing.Router
+
 	session session.Session
 	index   int
 
@@ -61,8 +64,9 @@ func (c *context) setProxy(p proxy.Proxy) {
 	c.session.SetProxy(p)
 }
 
-func Run(s session.Session) {
+func Run(s session.Session, router routing.Router) {
 	ctx := &context{
+		router:  router,
 		session: s,
 		index:   -1,
 	}

@@ -4,15 +4,18 @@
 # Support proxy protocol: http/https, socks5, shadowsocks, trojan
 
 # Example:
-# Http/Https: [http/https],[name],[server],[port],[tcp/udp]
-# Socks5: [socks5],[name],[server],[port],[username],[password],[tcp/udp]
-# Shadowsocks: [shadow],[name],[server],[port],[cipher],[password],[tcp/udp]
-# Trojan: [trojan],[name],[server],[port],[password],[sni],[tcp/udp]
+# Http/Https: [http/https],[name/alias],[server],[port],[tcp/udp]
+# Socks5: [socks5],[name/alias],[server],[port],[username],[password],[tcp/udp]
+# Shadowsocks: [shadow],[name/alias],[server],[port],[cipher],[password],[tcp/udp]
+# Trojan: [trojan],[name/alias],[server],[port],[password],[sni],[tcp/udp]
 proxies = [
     # "trojan,example1,siuu.com,8080,xxxxxxx,siuu.com,tcp",
 ]
 
 
+alias = [
+    # "name:[ALADASD, adasdaw, sadasd, asdawdq, asdawd]",
+]
 
 
 # route table config
@@ -25,21 +28,10 @@ proxies = [
 
 # If you want to use the default proxy,you can set the proxy name to default.
 # You can set the default proxy as you like
-# eg : [xxxxx],default
+# eg : [type],[xxxxx],default
 
-# exact match rules
-# Example: [domain],[proxy name]
-exacts = [
-    # 'github.com,example1',
-]
-
-
-# wildcard match rules
-# Example: [*domain],[proxy name]
-wildcards = [
-]
-
-# geo match rules
-# Example: [country/region/city],[proxy name]
-geo = [
+rules = [
+    # "exact,example1,example2",
+    # "wildcard,example1,example2",
+    # "geo,example1,example2",
 ]

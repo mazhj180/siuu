@@ -16,35 +16,41 @@ import (
 	"siuu/tunnel/proxy/shadow"
 	"siuu/tunnel/proxy/socks"
 	"siuu/tunnel/proxy/torjan"
+	"siuu/util"
 	"strconv"
 	"strings"
 	"sync"
 )
 
 var (
-	direct     *proxy.DirectProxy
-	proxyTable map[string]proxy.Proxy
-	proxyNames []string // for sorting
-	rwx        sync.RWMutex
-
-	selected proxy.Proxy
-	rwxS     sync.RWMutex
-)
-
-func InitProxy(filepath []string) {
 	direct = &proxy.DirectProxy{
 		Type:     proxy.DIRECT,
 		Name:     "direct",
 		Protocol: proxy.TCP,
 	}
-	proxyTable = make(map[string]proxy.Proxy)
-	selected = direct
 
-	constant.Signature = make(map[string]string)
+	proxyTable   map[string]proxy.Proxy
+	proxyNames   []string // for sorting
+	aliasMapping map[string]string
+
+	rwx sync.RWMutex
+
+	selected proxy.Proxy
+	rwxS     sync.RWMutex
+)
+
+func LoadProxy() {
+
+	proxyTable = make(map[string]proxy.Proxy)
+	aliasMapping = make(map[string]string)
+	selected = direct
+	filepath := util.GetConfigSlice(constant.RuleProxyPath)
 
 	v := viper.New()
 	v.SetConfigType("toml")
+
 	for _, f := range filepath {
+		f = util.ExpandHomePath(f)
 
 		if _, err := os.Stat(f); os.IsNotExist(err) {
 			logger.SWarn("failed to initialize proxy [%s]", f)
@@ -80,6 +86,21 @@ func InitProxy(filepath []string) {
 			logger.SWarn("failed to initialize proxy [%s]", f)
 			continue
 		}
+
+		alias := v.GetStringSlice("proxy.alias")
+		for _, ali := range alias {
+			parts := strings.SplitN(ali, ":", 2)
+
+			str := parts[1]
+			str = strings.TrimPrefix(str, "[")
+			str = strings.TrimSuffix(str, "]")
+
+			keys := strings.Split(str, ",")
+			for _, k := range keys {
+				aliasMapping[k] = parts[0]
+			}
+		}
+
 		proxies := v.GetStringSlice("proxy.proxies")
 		if err = AddProxies(proxies...); err != nil {
 			logger.SWarn("failed to initialize proxy [%s]", f)
@@ -176,7 +197,12 @@ func GetProxy(name string) proxy.Proxy {
 	}
 	rwx.RLock()
 	defer rwx.RUnlock()
-	return proxyTable[name]
+
+	prx, ok := proxyTable[name]
+	if !ok {
+		prx = proxyTable[aliasMapping[name]]
+	}
+	return prx
 }
 
 func GetProxyPointer(name string) *proxy.Proxy {
@@ -268,4 +294,10 @@ func TestProxyConnection(proxies []proxy.Proxy) map[string]float64 {
 type testRes struct {
 	prx   string
 	delay float64
+}
+
+func GetProxyNames() []string {
+	rwx.RLock()
+	defer rwx.RUnlock()
+	return proxyNames
 }

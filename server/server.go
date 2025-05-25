@@ -11,8 +11,11 @@ import (
 	"path"
 	"siuu/logger"
 	"siuu/server/config"
+	"siuu/server/config/constant"
+	"siuu/server/config/router"
 	"siuu/server/handler"
 	"siuu/server/session"
+	"siuu/tunnel/routing"
 	"siuu/util"
 	"sync"
 	"time"
@@ -38,21 +41,30 @@ func loggMiddleware(next http.Handler) http.Handler {
 }
 
 type Server struct {
-	ServerPort, HttpProxyPort, SocksProxyPort, PprofPort uint16
+	config.Config
+
+	PprofPort uint16
 
 	PprofIsOpen bool
 	Mux         *http.ServeMux
+	Router      routing.Router
 
 	ppSrv  *http.Server
 	ppMute sync.Mutex
+
+	Model constant.Model
 }
 
 func (s *Server) Start(_ service.Service) error {
 
-	var enablePprof bool
-	s.ServerPort, s.HttpProxyPort, s.SocksProxyPort, enablePprof = config.InitConfig(service.Interactive())
+	s.Config = config.InitConfig(service.Interactive())
 
-	if enablePprof {
+	if s.EnabledRule {
+		constant.Signature = make(map[string]string)
+		s.Router = router.NewBasicRouter()
+	}
+
+	if s.EnablePProf {
 		go s.startPprofServer()
 	}
 
@@ -155,7 +167,7 @@ func (s *Server) startHttpProxyServer() {
 			continue
 		}
 		sess := session.OpenHttpSession(conn)
-		go handler.Run(sess)
+		go handler.Run(sess, s.Router)
 	}
 }
 
@@ -172,6 +184,6 @@ func (s *Server) startSocksProxyServer() {
 			continue
 		}
 		sess := session.OpenSocksSession(conn)
-		go handler.Run(sess)
+		go handler.Run(sess, s.Router)
 	}
 }

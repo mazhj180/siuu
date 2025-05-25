@@ -14,20 +14,34 @@ var (
 	Proxies []byte
 )
 
+type Model byte
+
+const (
+	NORMAL Model = iota
+	TUN
+)
+
 type Key = string
 
 const (
-	ServerPort        Key = "server.port"
-	ProxyHttpPort         = "server.http.port"
-	ProxySocksPort        = "server.socks.port"
-	SystemLogLevel        = "log.level.system"
-	ProxyLogLevel         = "log.level.proxy"
-	LogDirPath            = "log.path"
-	RouterEnabled         = "router.enable"
-	RouteConfigPath       = "router.path.table"
-	RouteXdbPath          = "router.path.xdb"
-	ProxiesConfigPath     = "proxy.path"
-	EnablePProf           = "pprof.enable"
+	ServerPort     Key = "server.port"
+	ProxyHttpPort      = "server.http.port"
+	ProxySocksPort     = "server.socks.port"
+	EnablePProf        = "server.pprof.enable"
+
+	SystemLogLevel   = "log.level.system"
+	ProxyLogLevel    = "log.level.proxy"
+	LogDirPath       = "log.path"
+	ProxyModel       = "proxy.model"
+	RuleEnabled      = "rule.enable"
+	RuleRoutePath    = "rule.route.path"
+	RuleRouteXdbPath = "rule.route.xdb"
+	RuleProxyPath    = "rule.proxy.path"
+
+	RouterEnabled     = "router.enable"
+	RouteConfigPath   = "router.path.table"
+	RouteXdbPath      = "router.path.xdb"
+	ProxiesConfigPath = "proxy.path"
 )
 
 var (

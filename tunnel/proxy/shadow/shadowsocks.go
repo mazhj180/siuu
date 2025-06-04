@@ -3,6 +3,7 @@ package shadow
 import (
 	"context"
 	"encoding/binary"
+	"fmt"
 	"github.com/shadowsocks/go-shadowsocks2/core"
 	"net"
 	"siuu/tunnel/proxy"
@@ -10,17 +11,28 @@ import (
 	"time"
 )
 
-type Proxy struct {
-	Type     proxy.Type
-	Name     string
-	Server   string
-	Port     uint16
-	Cipher   string
-	Password string
-	Protocol proxy.Protocol
+type p struct {
+	proxy.BaseProxy
+
+	name     string
+	cipher   string
+	password string
 }
 
-func (s *Proxy) Connect(ctx context.Context, addr string, port uint16) (*proxy.Pd, error) {
+func New(base proxy.BaseProxy, name, cipher, password string) proxy.Proxy {
+	return &p{
+		BaseProxy: base,
+		name:      name,
+		cipher:    cipher,
+		password:  password,
+	}
+}
+
+func (s *p) Type() proxy.Type {
+	return proxy.SHADOW
+}
+
+func (s *p) Connect(ctx context.Context, addr string, port uint16) (*proxy.Pd, error) {
 	dialer := &net.Dialer{
 		Timeout: 30 * time.Second,
 	}
@@ -29,7 +41,7 @@ func (s *Proxy) Connect(ctx context.Context, addr string, port uint16) (*proxy.P
 		return nil, err
 	}
 
-	cipher, err := core.PickCipher(s.Cipher, nil, s.Password)
+	cipher, err := core.PickCipher(s.cipher, nil, s.password)
 	if err != nil {
 		return nil, err
 	}
@@ -69,22 +81,19 @@ func (s *Proxy) Connect(ctx context.Context, addr string, port uint16) (*proxy.P
 	return proxy.NewPd(agency), nil
 }
 
-func (s *Proxy) GetName() string {
-	return s.Name
+func (s *p) Name() string {
+	return s.name
 }
 
-func (s *Proxy) GetType() proxy.Type {
-	return s.Type
-}
-
-func (s *Proxy) GetServer() string {
-	return s.Server
-}
-
-func (s *Proxy) GetPort() uint16 {
-	return s.Port
-}
-
-func (s *Proxy) GetProtocol() proxy.Protocol {
-	return s.Protocol
+func (s *p) String() string {
+	return fmt.Sprintf(
+		`{"Server":"%s","Port":%d,"Protocol":"%s","Name":"%s","Cipher":"%s","Password":"%s","Type":"%s"}`,
+		s.Server,
+		s.Port,
+		s.Protocol,
+		s.name,
+		s.cipher,
+		s.password,
+		s.Type(),
+	)
 }

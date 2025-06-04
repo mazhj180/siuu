@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
-	"siuu/server/config/proxies"
 	"siuu/tunnel/proto"
 	"siuu/tunnel/proxy"
 )
@@ -23,7 +22,7 @@ func OpenSocksSession(conn net.Conn) Session {
 	return &socksSession{
 		id:   sid,
 		conn: conn,
-		prx:  proxies.GetDirect(),
+		prx:  &proxy.DirectProxy{},
 	}
 }
 

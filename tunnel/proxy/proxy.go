@@ -153,16 +153,36 @@ type UdpPocket struct {
 
 // Proxy the abstraction of proxy
 type Proxy interface {
+	fmt.Stringer
 
 	// Connect connects to the proxy with the given host and port.
 	// It returns the connection if success, otherwise returns an error.
 	Connect(context.Context, string, uint16) (*Pd, error)
 
-	GetType() Type
-	GetName() string
+	Type() Type
+	Name() string
+
 	GetServer() string
 	GetPort() uint16
 	GetProtocol() Protocol
+}
+
+type BaseProxy struct {
+	Server   string
+	Port     uint16
+	Protocol Protocol
+}
+
+func (p *BaseProxy) GetServer() string {
+	return p.Server
+}
+
+func (p *BaseProxy) GetPort() uint16 {
+	return p.Port
+}
+
+func (p *BaseProxy) GetProtocol() Protocol {
+	return p.Protocol
 }
 
 type Pd struct {

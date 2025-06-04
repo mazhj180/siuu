@@ -2,26 +2,29 @@ package server
 
 import (
 	"net/http"
-	"siuu/server/config/constant"
 	"siuu/server/config/router"
-	"siuu/util"
+	"siuu/tunnel/routing"
 )
 
 func RegisterRouterHandle(prefix string) {
-	Srv.Mux.HandleFunc(prefix+"/refresh", refreshRouter)
+	srv.mux.HandleFunc(prefix+"/refresh", refreshRouter)
 }
 
 func refreshRouter(w http.ResponseWriter, _ *http.Request) {
-	routePath := util.GetConfigSlice(constant.RouteConfigPath)
-	var routePathC []string
-	for _, route := range routePath {
-		routePathC = append(routePathC, util.ExpandHomePath(route))
+
+	if !srv.EnabledRule {
+		return
 	}
-	xdbPath := util.GetConfig[string](constant.RouteXdbPath)
-	xdbPath = util.ExpandHomePath(xdbPath)
-	if err := router.RefreshBasicRouter(Srv.Router); err != nil {
+
+	var err error
+	var rou routing.Router
+	if rou, err = router.NewDefaultRouter(); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	srv.Lock()
+	defer srv.Unlock()
+
+	srv.Router = rou
 	w.WriteHeader(http.StatusOK)
 }

@@ -12,18 +12,30 @@ import (
 	"time"
 )
 
-type Proxy struct {
-	Type     proxy.Type
-	Name     string
-	Server   string
-	Port     uint16
-	Uuid     string
-	AlterId  int
-	Cipher   string
-	Protocol proxy.Protocol
+type p struct {
+	proxy.BaseProxy
+
+	name    string
+	uuid    string
+	alterId int
+	cipher  string
 }
 
-func (v *Proxy) Connect(ctx context.Context, addr string, port uint16) (net.Conn, error) {
+func New(base proxy.BaseProxy, name, uuid string, alterId int, cipher string) proxy.Proxy {
+	return &p{
+		BaseProxy: base,
+		name:      name,
+		uuid:      uuid,
+		alterId:   alterId,
+		cipher:    cipher,
+	}
+}
+
+func (v *p) Type() proxy.Type {
+	return proxy.VMESS
+}
+
+func (v *p) Connect(ctx context.Context, addr string, port uint16) (*proxy.Pd, error) {
 	conf := &tls.Config{
 		InsecureSkipVerify: true,
 	}
@@ -39,32 +51,20 @@ func (v *Proxy) Connect(ctx context.Context, addr string, port uint16) (net.Conn
 
 	// generate auth id
 	var authId [16]byte
-	mac := hmac.New(md5.New, []byte(v.Uuid))
+	mac := hmac.New(md5.New, []byte(v.uuid))
 	mac.Write(ts[:])
 	copy(authId[:], mac.Sum(nil))
 
 	// dst addr
 	// todo
 
-	return agency, proxy.ErrProtocolNotSupported
+	return proxy.NewPd(agency), proxy.ErrProtocolNotSupported
 }
 
-func (v *Proxy) GetName() string {
-	return v.Name
+func (v *p) Name() string {
+	return v.name
 }
 
-func (v *Proxy) GetType() proxy.Type {
-	return v.Type
-}
-
-func (v *Proxy) GetServer() string {
-	return v.Server
-}
-
-func (v *Proxy) GetPort() uint16 {
-	return v.Port
-}
-
-func (v *Proxy) GetProtocol() proxy.Protocol {
-	return v.Protocol
+func (v *p) String() string {
+	return ""
 }

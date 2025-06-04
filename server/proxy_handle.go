@@ -11,10 +11,9 @@ import (
 )
 
 func RegisterProxyHandle(prefix string) {
-	mux := Srv.Mux
+	mux := srv.mux
 	mux.HandleFunc(prefix, getProxies)
 	mux.HandleFunc(prefix+"/add", addProxy)
-	mux.HandleFunc(prefix+"/remove", removeProxy)
 	mux.HandleFunc(prefix+"/get", getProxy)
 	mux.HandleFunc(prefix+"/set", setDefaultProxy)
 	mux.HandleFunc(prefix+"/get-default", getDefaultProxy)
@@ -35,25 +34,17 @@ func addProxy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = ps.AddProxies(proxies...); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+	srv.Lock()
+	defer srv.Unlock()
+	for _, str := range proxies {
+		var prx proxy.Proxy
+		if prx, err = ps.ParseProxy(str); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		srv.Router.AddProxies(prx)
 	}
-	w.WriteHeader(http.StatusOK)
-}
 
-func removeProxy(w http.ResponseWriter, r *http.Request) {
-	query := r.URL.Query()
-	if !query.Has("proxies") {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	params := query.Get("proxies")
-	var names []string
-	for _, name := range strings.Split(params, ",") {
-		names = append(names, name)
-	}
-	ps.RemoveProxies(names...)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -64,13 +55,17 @@ func getProxy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err := json.Marshal(ps.GetProxy(query.Get("prx")))
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	srv.RLock()
+	defer srv.RUnlock()
 
-	if _, err = w.Write(data); err != nil {
+	router := srv.Router
+	prx := router.GetProxy(query.Get("prx"))
+	if prx == nil {
+		prx = &proxy.DirectProxy{}
+	}
+	data := prx.String()
+
+	if _, err := w.Write([]byte(data)); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -78,31 +73,46 @@ func getProxy(w http.ResponseWriter, r *http.Request) {
 
 func getProxies(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
-	proxies := ps.GetProxies()
+
+	srv.RLock()
+	defer srv.RUnlock()
+
+	router := srv.Router
+
+	router.RLock()
+	defer router.RUnlock()
+
+	proxies := router.GetAllProxies()
+	var prxStr []string
+
+	for idx := range proxies {
+		prxStr = append(prxStr, proxies[idx].String())
+	}
 
 	if query.Has("prx") {
-		proxies = proxies[1:]
 		prx := query.Get("prx")
 		names := make([]string, len(proxies))
 		for i := range proxies {
-			names[i] = proxies[i].GetName()
+			names[i] = proxies[i].Name()
 		}
 
 		names = pinyin.FuzzyMatch(names, prx)
-		proxies = make([]proxy.Proxy, len(names))
+		prxStr = make([]string, len(names))
 		for i := range names {
-			proxies[i] = ps.GetProxy(names[i])
+			prxStr[i] = router.GetProxy(names[i]).String()
 		}
-		proxies = append([]proxy.Proxy{ps.GetSelectedProxy()}, proxies...)
 	}
 
-	data, err := json.Marshal(proxies)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+	var defau proxy.Proxy
+	if defau = router.GetDefaultProxy(); defau == nil {
+		defau = &proxy.DirectProxy{}
 	}
+	direct := &proxy.DirectProxy{}
+	prxStr = append([]string{defau.String(), direct.String()}, prxStr...)
 
-	if _, err = w.Write(data); err != nil {
+	data := "[" + strings.Join(prxStr, ",") + "]"
+
+	if _, err := w.Write([]byte(data)); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -114,7 +124,14 @@ func setDefaultProxy(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	err := ps.SetSelectedProxy(query.Get("proxy"))
+	srv.Lock()
+	defer srv.Unlock()
+
+	router := srv.Router
+	router.Lock()
+	defer router.Unlock()
+
+	err := router.SetDefaultProxy(router.GetProxy(query.Get("proxy")))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte(err.Error()))
@@ -125,31 +142,47 @@ func setDefaultProxy(w http.ResponseWriter, r *http.Request) {
 }
 
 func getDefaultProxy(w http.ResponseWriter, r *http.Request) {
-	prx := ps.GetSelectedProxy()
-	if _, err := w.Write([]byte(prx.GetName())); err != nil {
+	srv.RLock()
+	defer srv.RUnlock()
+
+	router := srv.Router
+	router.RLock()
+	defer router.RUnlock()
+
+	prx := router.GetDefaultProxy()
+	if _, err := w.Write([]byte(prx.Name())); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
 
 func testDelay(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
-	proxies := ps.GetProxies()
+
+	srv.RLock()
+	defer srv.RUnlock()
+
+	router := srv.Router
+	router.RLock()
+	defer router.RUnlock()
+
+	proxies := router.GetAllProxies()
 
 	if query.Has("prx") {
 		proxies = proxies[1:]
 		prx := query.Get("prx")
 		names := make([]string, len(proxies))
 		for i := range proxies {
-			names[i] = proxies[i].GetName()
+			names[i] = proxies[i].Name()
 		}
 
 		names = pinyin.FuzzyMatch(names, prx)
 		proxies = make([]proxy.Proxy, len(names))
 		for i := range names {
-			proxies[i] = ps.GetProxy(names[i])
+			proxies[i] = router.GetProxy(names[i])
 		}
-		proxies = append([]proxy.Proxy{ps.GetSelectedProxy()}, proxies...)
 	}
+
+	proxies = append([]proxy.Proxy{router.GetDefaultProxy()}, proxies...)
 
 	res := ps.TestProxyConnection(proxies)
 	bytes, err := json.Marshal(res)

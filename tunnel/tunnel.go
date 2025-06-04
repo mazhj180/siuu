@@ -69,7 +69,7 @@ func (t *tunnel) In(p proto.Interface) (Traffic, error) {
 	// forward
 	monitored := monitor.Watch(conn)
 
-	if prx.GetType() == proxy.DIRECT {
+	if prx.Type() == proxy.DIRECT {
 		h, ok := p.(proto.HttpInterface)
 		if ok {
 			reader := h.GetHttpReader()
@@ -155,7 +155,7 @@ func (t *tunnel) Interrupt() []string {
 // Finally, it records the traffic and logs it.
 func (t *tunnel) Ping(prx proxy.Proxy) (Traffic, error) {
 	host := "github.com"
-	if prx.GetType() == proxy.DIRECT {
+	if prx.Type() == proxy.DIRECT {
 		host = "baidu.com"
 	}
 	req, err := http.NewRequest("GET", "https://"+host, nil)

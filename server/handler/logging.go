@@ -9,7 +9,6 @@ func loggingHandle(ctx *context) {
 	addr := s.GetConn().RemoteAddr()
 	ctx.remoteAddr = addr
 	logger.PDebug("<%s> [access] [cli: %s] is arrival", s.ID(), addr)
-	logger.SInfo("<%s> [access] [cli: %s] is arrival ", s.ID(), addr)
 
 	ctx.next()
 
@@ -25,16 +24,16 @@ func loggingHandle(ctx *context) {
 			addr,
 			host,
 			port,
-			prx.GetName(),
+			prx.Name(),
 			ctx.err)
 
-		logger.PError("<%s> [ending] connect to [%s:%d] used by [%s] failed", sid, host, port, prx.GetName())
+		logger.PError("<%s> [ending] connect to [%s:%d] used by [%s] failed", sid, host, port, prx.Name())
 	} else {
 		logger.PInfo("<%s> [ending] send to [%s:%d] used by [%s] [router: %s::%s]  [up:%d B | %.2f KB/s] [down:%d B | %.2f KB/s] [delay: %d ms]",
 			sid,
 			host,
 			port,
-			prx.GetName(),
+			prx.Name(),
 			ctx.routerName,
 			ctx.rule,
 			ctx.up, ctx.upSpeed/1024, ctx.down, ctx.downSpeed/1024,

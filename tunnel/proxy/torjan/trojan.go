@@ -7,27 +7,37 @@ import (
 	"crypto/tls"
 	"encoding/binary"
 	"encoding/hex"
+	"fmt"
 	"net"
 	"siuu/tunnel/proxy"
 	"strconv"
 	"time"
 )
 
-type Proxy struct {
-	conn net.Conn
+type p struct {
+	proxy.BaseProxy
 
-	Type     proxy.Type
-	Name     string
-	Server   string
-	Port     uint16
-	Password string
-	Protocol proxy.Protocol
-	Sni      string
+	name     string
+	password string
+	sni      string
 }
 
-func (t *Proxy) Connect(ctx context.Context, addr string, port uint16) (*proxy.Pd, error) {
+func New(base proxy.BaseProxy, name, password, sni string) proxy.Proxy {
+	return &p{
+		BaseProxy: base,
+		name:      name,
+		password:  password,
+		sni:       sni,
+	}
+}
+
+func (t *p) Type() proxy.Type {
+	return proxy.TROJAN
+}
+
+func (t *p) Connect(ctx context.Context, addr string, port uint16) (*proxy.Pd, error) {
 	tlsConfig := &tls.Config{
-		ServerName:         t.Sni,
+		ServerName:         t.sni,
 		InsecureSkipVerify: true,
 	}
 	dialer := &tls.Dialer{
@@ -43,7 +53,7 @@ func (t *Proxy) Connect(ctx context.Context, addr string, port uint16) (*proxy.P
 
 	// trojan handshake
 	hash := sha256.New224()
-	hash.Write([]byte(t.Password))
+	hash.Write([]byte(t.password))
 	pwd := hex.EncodeToString(hash.Sum(nil))
 	authMsg := pwd + "\r\n"
 	if _, err = agency.Write([]byte(authMsg)); err != nil {
@@ -88,22 +98,19 @@ func (t *Proxy) Connect(ctx context.Context, addr string, port uint16) (*proxy.P
 	return proxy.NewPd(agency), nil
 }
 
-func (t *Proxy) GetName() string {
-	return t.Name
+func (t *p) Name() string {
+	return t.name
 }
 
-func (t *Proxy) GetType() proxy.Type {
-	return t.Type
-}
-
-func (t *Proxy) GetServer() string {
-	return t.Server
-}
-
-func (t *Proxy) GetPort() uint16 {
-	return t.Port
-}
-
-func (t *Proxy) GetProtocol() proxy.Protocol {
-	return t.Protocol
+func (t *p) String() string {
+	return fmt.Sprintf(
+		`{"Server":"%s","Port":%d,"Protocol":"%s","Name":"%s","Sni":"%s","Password":"%s","Type":"%s"}`,
+		t.Server,
+		t.Port,
+		t.Protocol,
+		t.name,
+		t.sni,
+		t.password,
+		t.Type(),
+	)
 }

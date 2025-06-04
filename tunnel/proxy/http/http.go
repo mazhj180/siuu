@@ -10,15 +10,24 @@ import (
 	"time"
 )
 
-type Proxy struct {
-	Type     proxy.Type
-	Name     string
-	Server   string
-	Port     uint16
-	Protocol proxy.Protocol
+type p struct {
+	proxy.BaseProxy
+
+	name string
 }
 
-func (h *Proxy) Connect(ctx context.Context, addr string, port uint16) (*proxy.Pd, error) {
+func New(base proxy.BaseProxy, name string) proxy.Proxy {
+	return &p{
+		BaseProxy: base,
+		name:      name,
+	}
+}
+
+func (h *p) Type() proxy.Type {
+	return proxy.HTTPS
+}
+
+func (h *p) Connect(ctx context.Context, addr string, port uint16) (*proxy.Pd, error) {
 
 	dialer := &net.Dialer{
 		Timeout: 30 * time.Second,
@@ -47,22 +56,17 @@ func (h *Proxy) Connect(ctx context.Context, addr string, port uint16) (*proxy.P
 	return proxy.NewPd(agency), nil
 }
 
-func (h *Proxy) GetName() string {
-	return h.Name
+func (h *p) Name() string {
+	return h.name
 }
 
-func (h *Proxy) GetType() proxy.Type {
-	return h.Type
-}
-
-func (h *Proxy) GetServer() string {
-	return h.Server
-}
-
-func (h *Proxy) GetPort() uint16 {
-	return h.Port
-}
-
-func (h *Proxy) GetProtocol() proxy.Protocol {
-	return h.Protocol
+func (h *p) String() string {
+	return fmt.Sprintf(
+		`{"Server":"%s","Port":%d,"Protocol":"%s","Name":"%s","Type":"%s"}`,
+		h.Server,
+		h.Port,
+		h.Protocol,
+		h.name,
+		h.Type(),
+	)
 }

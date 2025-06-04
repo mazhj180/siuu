@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"siuu/tunnel/proxy"
@@ -14,17 +15,28 @@ import (
 var ErrSocksVerNotSupported = errors.New("socks version not supported")
 var ErrSocksAuthentication = errors.New("socks auth was fail or not support the way ")
 
-type Proxy struct {
-	Type     proxy.Type
-	Name     string
-	Server   string
-	Port     uint16
-	Username string
-	Password string
-	Protocol proxy.Protocol
+type p struct {
+	proxy.BaseProxy
+
+	name     string
+	username string
+	password string
 }
 
-func (s *Proxy) Connect(ctx context.Context, addr string, port uint16) (*proxy.Pd, error) {
+func New(base proxy.BaseProxy, name, username, password string) proxy.Proxy {
+	return &p{
+		BaseProxy: base,
+		name:      name,
+		username:  username,
+		password:  password,
+	}
+}
+
+func (s *p) Type() proxy.Type {
+	return proxy.SOCKS
+}
+
+func (s *p) Connect(ctx context.Context, addr string, port uint16) (*proxy.Pd, error) {
 	dialer := &net.Dialer{
 		Timeout: 30 * time.Second,
 	}
@@ -54,15 +66,15 @@ func (s *Proxy) Connect(ctx context.Context, addr string, port uint16) (*proxy.P
 	// Username/password authentication
 	// Username Password Authentication Sub-Negotiation Protocol.
 	// VER=0x01, ULEN=xx, USERNAME, PLEN=xx, PASSWORD
-	uLen, pLen := byte(len(s.Username)), byte(len(s.Password))
+	uLen, pLen := byte(len(s.username)), byte(len(s.password))
 	authMsg := make([]byte, uLen+pLen+3)
 	authMsg[0] = 0x01 // ver
 
 	authMsg[1] = uLen
-	copy(authMsg[2:2+len(s.Username)], s.Username)
+	copy(authMsg[2:2+len(s.username)], s.username)
 
-	authMsg[2+len(s.Username)] = pLen
-	copy(authMsg[3+len(s.Username):], s.Password)
+	authMsg[2+len(s.username)] = pLen
+	copy(authMsg[3+len(s.username):], s.password)
 
 	if _, err = agency.Write(authMsg); err != nil {
 		return nil, err
@@ -152,22 +164,19 @@ func (s *Proxy) Connect(ctx context.Context, addr string, port uint16) (*proxy.P
 	return proxy.NewPd(agency), nil
 }
 
-func (s *Proxy) GetName() string {
-	return s.Name
+func (s *p) Name() string {
+	return s.name
 }
 
-func (s *Proxy) GetType() proxy.Type {
-	return s.Type
-}
-
-func (s *Proxy) GetServer() string {
-	return s.Server
-}
-
-func (s *Proxy) GetPort() uint16 {
-	return s.Port
-}
-
-func (s *Proxy) GetProtocol() proxy.Protocol {
-	return s.Protocol
+func (s *p) String() string {
+	return fmt.Sprintf(
+		`{"Server":"%s","Port":%d,"Protocol":"%s","Name":"%s","Username":"%s","Password":"%s","Type":"%s"}`,
+		s.Server,
+		s.Port,
+		s.Protocol,
+		s.name,
+		s.username,
+		s.password,
+		s.Type(),
+	)
 }

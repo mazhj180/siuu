@@ -37,11 +37,6 @@ const (
 	RuleRoutePath    = "rule.route.path"
 	RuleRouteXdbPath = "rule.route.xdb"
 	RuleProxyPath    = "rule.proxy.path"
-
-	RouterEnabled     = "router.enable"
-	RouteConfigPath   = "router.path.table"
-	RouteXdbPath      = "router.path.xdb"
-	ProxiesConfigPath = "proxy.path"
 )
 
 var (

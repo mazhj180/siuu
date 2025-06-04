@@ -3,14 +3,27 @@ package rules
 import (
 	"github.com/lionsoul2014/ip2region/binding/golang/xdb"
 	"net"
+	"siuu/server/config/constant"
 	"siuu/tunnel/routing/rule"
+	"siuu/util"
 	"strings"
+	"sync"
 )
 
 var (
 	xdbb []byte
 	xdbp string
+
+	once sync.Once
 )
+
+func InitXdb() {
+	once.Do(func() {
+		xdbp = util.GetConfig[string](constant.RuleRouteXdbPath)
+		xdbp = util.ExpandHomePath(xdbp)
+		xdbb, _ = xdb.LoadVectorIndexFromFile(xdbp)
+	})
+}
 
 type GeoRule struct {
 	rule.BaseRule

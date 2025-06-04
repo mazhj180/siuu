@@ -12,7 +12,6 @@ import (
 	"golang.org/x/net/dns/dnsmessage"
 	"net"
 	"net/http"
-	proxy2 "siuu/tunnel/proxy"
 	"strconv"
 	"testing"
 )
@@ -22,19 +21,11 @@ func TestTrojan(t *testing.T) {
 	data := "GET / HTTP/1.1\nHost: www.bing.com\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7\nAccept-Encoding: gzip, deflate, br\nAccept-Language: en-US,en;q=0.9\nConnection: keep-alive"
 
 	// 服务器地址和端口
-	tp := &Proxy{
-		Type:     proxy2.TROJAN,
-		Name:     "xxxxxxx",
-		Server:   "xxxxxx",
-		Port:     0000,
-		Protocol: proxy2.TCP,
-		Password: "xcxasxxx",
-		Sni:      "xxxxxx",
-	}
+	tp := &p{}
 
 	// 配置 TLS
 	tlsConfig := &tls.Config{
-		ServerName:         tp.Sni, // 设置 SNI
+		ServerName:         tp.sni, // 设置 SNI
 		InsecureSkipVerify: false,  // 验证证书
 	}
 
@@ -47,12 +38,12 @@ func TestTrojan(t *testing.T) {
 	defer conn.Close()
 	fmt.Println(data)
 	hash := sha256.New224()
-	hash.Write([]byte(tp.Password))
+	hash.Write([]byte(tp.password))
 	pwd := hex.EncodeToString(hash.Sum(nil))
 	fmt.Println(pwd)
 	fmt.Println(len(pwd))
 
-	fmt.Println(SHA224String(tp.Password))
+	fmt.Println(SHA224String(tp.password))
 
 }
 func SHA224String(password string) string {

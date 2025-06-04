@@ -6,14 +6,14 @@ import (
 )
 
 func RegisterConfHandle(prefix string) {
-	Srv.Mux.HandleFunc(prefix+"/open", openPprof)
-	Srv.Mux.HandleFunc(prefix+"/close", closePprof)
+	srv.mux.HandleFunc(prefix+"/open", openPprof)
+	srv.mux.HandleFunc(prefix+"/close", closePprof)
 }
 
 func openPprof(_ http.ResponseWriter, _ *http.Request) {
-	go Srv.startPprofServer()
+	go srv.startPprofServer()
 }
 
 func closePprof(_ http.ResponseWriter, _ *http.Request) {
-	Srv.stopPprofServer()
+	srv.stopPprofServer()
 }

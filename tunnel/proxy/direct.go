@@ -2,17 +2,16 @@ package proxy
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"strconv"
 	"time"
 )
 
-type DirectProxy struct {
-	Type     Type
-	Name     string
-	Server   string
-	Port     uint16
-	Protocol Protocol
+type DirectProxy struct{}
+
+func (d *DirectProxy) Type() Type {
+	return DIRECT
 }
 
 func (d *DirectProxy) Connect(ctx context.Context, addr string, port uint16) (*Pd, error) {
@@ -27,22 +26,22 @@ func (d *DirectProxy) Connect(ctx context.Context, addr string, port uint16) (*P
 	return &Pd{agency}, nil
 }
 
-func (d *DirectProxy) GetName() string {
-	return d.Name
-}
-
-func (d *DirectProxy) GetType() Type {
-	return d.Type
+func (d *DirectProxy) Name() string {
+	return "direct"
 }
 
 func (d *DirectProxy) GetServer() string {
-	return d.Server
+	return ""
 }
 
 func (d *DirectProxy) GetPort() uint16 {
-	return d.Port
+	return 0
 }
 
 func (d *DirectProxy) GetProtocol() Protocol {
-	return d.Protocol
+	return TCP
+}
+
+func (d *DirectProxy) String() string {
+	return fmt.Sprintf(`{"Server":"","Port":0,"Protocol":"","Name":"direct","Type":"%s"}`, d.Type())
 }

@@ -10,7 +10,7 @@ func handshakeHandle(ctx *context) {
 	s := ctx.session
 	err := s.Handshakes()
 	if err != nil {
-		logger.SError("<%s> [handshake] [cli: %s] handshakes was failed; err: %s", s.ID(), ctx.remoteAddr, err)
+		logger.PError("<%s> [handshake] [cli: %s] handshakes was failed; err: %s", s.ID(), ctx.remoteAddr, err)
 		return
 	}
 	ctx.handshake = true
@@ -19,11 +19,11 @@ func handshakeHandle(ctx *context) {
 	port := s.GetPort()
 	addr := fmt.Sprintf("%s:%d", host, port)
 	ctx.dst = addr
-	logger.SDebug("<%s> [handshake] [cli: %s] handshakes successfully [dst: %s] ", s.ID(), ctx.remoteAddr, addr)
+	logger.PDebug("<%s> [handshake] [cli: %s] handshakes successfully [dst: %s] ", s.ID(), ctx.remoteAddr, addr)
 
 	if ip := net.ParseIP(host); ip != nil && (ip.IsLoopback() || ip.IsPrivate()) {
 		ctx.skip()
-		logger.SDebug("<%s> [handshake] [cli: %s] skip route cause: dst-ip is loopback or private", s.ID(), ctx.remoteAddr)
+		logger.PDebug("<%s> [handshake] [cli: %s] skip route cause: dst-ip is loopback or private", s.ID(), ctx.remoteAddr)
 	} else {
 		ctx.next()
 	}

@@ -2,9 +2,9 @@ package handler
 
 import (
 	"net"
+	visitor "siuu/server/resources_visitor"
 	"siuu/server/session"
 	"siuu/tunnel/proxy"
-	"siuu/tunnel/routing"
 )
 
 var (
@@ -23,7 +23,7 @@ func init() {
 type handle func(*context)
 
 type context struct {
-	router routing.Router
+	visitor visitor.Visitor
 
 	session session.Session
 	index   int
@@ -64,11 +64,17 @@ func (c *context) setProxy(p proxy.Proxy) {
 	c.session.SetProxy(p)
 }
 
-func Run(s session.Session, router routing.Router) {
+func Run(s session.Session, visitor visitor.Visitor) {
+
 	ctx := &context{
-		router:  router,
+		visitor: visitor,
 		session: s,
 		index:   -1,
 	}
+
 	ctx.next()
+
+	// preventing unreleased locks
+	visitor.Unlock()
+	visitor.RUnlock()
 }

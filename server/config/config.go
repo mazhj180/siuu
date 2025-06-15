@@ -3,8 +3,8 @@ package config
 import (
 	"os"
 	"path"
-	"siuu/logger"
 	"siuu/server/config/constant"
+	"siuu/tunnel/logger"
 	"siuu/util"
 )
 

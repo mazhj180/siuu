@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"siuu/logger"
+	"siuu/tunnel/logger"
 )
 
 func loggingHandle(ctx *context) {

@@ -3,7 +3,7 @@ package test
 import (
 	"path"
 	"runtime"
-	"siuu/logger"
+	"siuu/tunnel/logger"
 	"testing"
 )
 

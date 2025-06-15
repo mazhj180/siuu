@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"siuu/tunnel/mux"
 )
 
 const (
@@ -19,11 +20,13 @@ const (
 	TROJAN
 	VMESS
 
-	// TCP it cannot forward UDP traffic.
+	// TCP it can forward TCP traffic.
 	TCP Protocol = 1
 
 	// UDP it can forward UDP traffic.
 	UDP Protocol = 2
+
+	BOTH Protocol = 3
 )
 
 var ErrProxyTypeNotSupported = errors.New("proxy type not supported")
@@ -106,6 +109,8 @@ func (p *Protocol) MarshalJSON() ([]byte, error) {
 		proto = "tcp"
 	case UDP:
 		proto = "udp"
+	case BOTH:
+		proto = "both"
 	default:
 		return nil, fmt.Errorf("%w: %d", ErrProtocolNotSupported, p)
 	}
@@ -171,6 +176,9 @@ type BaseProxy struct {
 	Server   string
 	Port     uint16
 	Protocol Protocol
+	Mux      mux.Interface
+	Pool     *mux.Pool
+	Dialer   func(context.Context) (net.Conn, error)
 }
 
 func (p *BaseProxy) GetServer() string {

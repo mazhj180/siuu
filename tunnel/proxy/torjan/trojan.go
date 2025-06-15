@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net"
+	"siuu/tunnel/mux"
 	"siuu/tunnel/proxy"
 	"strconv"
 	"time"
@@ -23,6 +24,28 @@ type p struct {
 }
 
 func New(base proxy.BaseProxy, name, password, sni string) proxy.Proxy {
+
+	dialer := func(ctx context.Context) (net.Conn, error) {
+		tlsConfig := &tls.Config{
+			ServerName:         sni,
+			InsecureSkipVerify: true,
+		}
+		dialer := &tls.Dialer{
+			NetDialer: &net.Dialer{
+				Timeout: 30 * time.Second,
+			},
+			Config: tlsConfig,
+		}
+		agency, err := dialer.DialContext(ctx, "tcp", net.JoinHostPort(base.Server, strconv.FormatUint(uint64(base.Port), 10)))
+		if err != nil {
+			return nil, err
+		}
+		return agency, nil
+	}
+
+	base.Dialer = dialer
+	base.Pool = mux.NewPool(base.Mux, dialer, 5)
+
 	return &p{
 		BaseProxy: base,
 		name:      name,
@@ -36,17 +59,16 @@ func (t *p) Type() proxy.Type {
 }
 
 func (t *p) Connect(ctx context.Context, addr string, port uint16) (*proxy.Pd, error) {
-	tlsConfig := &tls.Config{
-		ServerName:         t.sni,
-		InsecureSkipVerify: true,
+
+	var agency net.Conn
+	var err error
+
+	if t.Mux != nil {
+		agency, err = t.Pool.GetStream(ctx)
+	} else {
+		agency, err = t.Dialer(ctx)
 	}
-	dialer := &tls.Dialer{
-		NetDialer: &net.Dialer{
-			Timeout: 30 * time.Second,
-		},
-		Config: tlsConfig,
-	}
-	agency, err := dialer.DialContext(ctx, "tcp", net.JoinHostPort(t.Server, strconv.FormatUint(uint64(t.Port), 10)))
+
 	if err != nil {
 		return nil, err
 	}

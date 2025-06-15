@@ -7,7 +7,7 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"siuu/logger"
+	"siuu/tunnel/logger"
 	"siuu/tunnel/monitor"
 	"siuu/tunnel/proto"
 	"siuu/tunnel/proxy"

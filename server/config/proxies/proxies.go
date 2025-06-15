@@ -4,6 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"siuu/tunnel"
+	"siuu/tunnel/mux"
+	_ "siuu/tunnel/mux/smux"
+	_ "siuu/tunnel/mux/yamux"
 	"siuu/tunnel/proxy"
 	"siuu/tunnel/proxy/http"
 	"siuu/tunnel/proxy/shadow"
@@ -22,15 +25,24 @@ func ParseProxy(p string) (proxy.Proxy, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	protocol := proxy.TCP
-	if val[len(val)-1] == "udp" {
+	l := len(val)
+	proto := strings.Split(val[l-2], "=")
+	if proto[1] == "udp" {
 		protocol = proxy.UDP
+	} else if proto[1] == "both" {
+		protocol = proxy.BOTH
 	}
+
+	muxStr := strings.Split(val[l-1], "=")
+	multiplexer, _ := mux.GetMultiplexer(muxStr[1])
 
 	basePrx := proxy.BaseProxy{
 		Server:   val[2],
 		Port:     uint16(port),
 		Protocol: protocol,
+		Mux:      multiplexer,
 	}
 
 	var prx proxy.Proxy

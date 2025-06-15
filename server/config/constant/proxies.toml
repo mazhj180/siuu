@@ -4,12 +4,12 @@
 # Support proxy protocol: http/https, socks5, shadowsocks, trojan
 
 # Example:
-# Http/Https: [http/https],[name/alias],[server],[port],[tcp/udp]
-# Socks5: [socks5],[name/alias],[server],[port],[username],[password],[tcp/udp]
-# Shadowsocks: [shadow],[name/alias],[server],[port],[cipher],[password],[tcp/udp]
-# Trojan: [trojan],[name/alias],[server],[port],[password],[sni],[tcp/udp]
+# Http/Https: [http/https],[name/alias],[server],[port],traff=[tcp/udp/both],mux=[no/smux]
+# Socks5: [socks5],[name/alias],[server],[port],[username],[password],traff=[tcp/udp/both],mux=[no/mux]
+# Shadowsocks: [shadow],[name/alias],[server],[port],[cipher],[password],traff=[tcp/udp/both],mux=[no/mux]
+# Trojan: [trojan],[name/alias],[server],[port],[password],[sni],traff=[tcp/udp/both],mux=[no/mux]
 proxies = [
-    # "trojan,example1,siuu.com,8080,xxxxxxx,siuu.com,tcp",
+    # "trojan,example1,siuu.com,8080,xxxxxxx,siuu.com,traff=tcp,mux=smux",
 ]
 
 

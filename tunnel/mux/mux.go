@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"net"
+	"strings"
 )
 
 var multiplexers map[string]func() Interface
@@ -13,6 +14,9 @@ func init() {
 }
 
 func Register(key string, getter func() Interface) {
+	if strings.EqualFold(key, "no") {
+		panic("mux: Register key must not be 'no'")
+	}
 	multiplexers[key] = getter
 }
 

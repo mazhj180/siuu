@@ -129,7 +129,7 @@ func (t *p) String() string {
 		`{"Server":"%s","Port":%d,"Protocol":"%s","Name":"%s","Sni":"%s","Password":"%s","Type":"%s"}`,
 		t.Server,
 		t.Port,
-		t.Protocol,
+		t.Protocol.String(),
 		t.name,
 		t.sni,
 		t.password,

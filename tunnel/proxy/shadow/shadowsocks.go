@@ -90,7 +90,7 @@ func (s *p) String() string {
 		`{"Server":"%s","Port":%d,"Protocol":"%s","Name":"%s","Cipher":"%s","Password":"%s","Type":"%s"}`,
 		s.Server,
 		s.Port,
-		s.Protocol,
+		s.Protocol.String(),
 		s.name,
 		s.cipher,
 		s.password,

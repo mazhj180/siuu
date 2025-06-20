@@ -173,7 +173,7 @@ func (s *p) String() string {
 		`{"Server":"%s","Port":%d,"Protocol":"%s","Name":"%s","Username":"%s","Password":"%s","Type":"%s"}`,
 		s.Server,
 		s.Port,
-		s.Protocol,
+		s.Protocol.String(),
 		s.name,
 		s.username,
 		s.password,

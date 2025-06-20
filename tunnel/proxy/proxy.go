@@ -133,6 +133,19 @@ func (p *Protocol) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (p *Protocol) String() string {
+	switch *p {
+	case TCP:
+		return "tcp"
+	case UDP:
+		return "udp"
+	case BOTH:
+		return "both"
+	default:
+		return "unknown"
+	}
+}
+
 // Client forwarded data
 type Client struct {
 	Sid string // session id

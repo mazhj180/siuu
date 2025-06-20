@@ -65,7 +65,7 @@ func (h *p) String() string {
 		`{"Server":"%s","Port":%d,"Protocol":"%s","Name":"%s","Type":"%s"}`,
 		h.Server,
 		h.Port,
-		h.Protocol,
+		h.Protocol.String(),
 		h.name,
 		h.Type(),
 	)

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/kardianos/service"
-	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -36,13 +35,10 @@ func Siuu() *Server {
 
 func loggMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger.SInfo("[system-ctl] http request access %s %s", r.Method, r.URL.Path)
 		start := time.Now()
 		next.ServeHTTP(w, r)
-		slog.Info("HTTP Request",
-			"method", r.Method,
-			"path", r.URL.Path,
-			"duration", time.Since(start),
-		)
+		logger.SDebug("[system-ctl] http request method=%s path=%s duration=%s", r.Method, r.URL.Path, time.Since(start))
 	})
 }
 
@@ -112,7 +108,7 @@ func (s *Server) Start(_ service.Service) error {
 }
 
 func (s *Server) Stop(_ service.Service) error {
-	_, _ = fmt.Fprintf(os.Stdout, "[program] Stopping... (clean up resources)")
+	_, _ = fmt.Fprintf(os.Stdout, "server stop\n")
 	return nil
 }
 

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"siuu/tunnel/routing"
 	"siuu/util/pinyin"
+	"slices"
 )
 
 func init() {
@@ -38,6 +39,8 @@ func getAliases(w http.ResponseWriter, r *http.Request) {
 		alias = append(alias, k)
 	}
 
+	slices.Sort(alias)
+
 	if query.Has("alias") {
 		ali := query.Get("alias")
 		alias = pinyin.FuzzyMatch(alias, ali)
@@ -51,7 +54,7 @@ func getAliases(w http.ResponseWriter, r *http.Request) {
 			Proxy string `json:"proxy"`
 		}{
 			Alias: v,
-			Proxy: br.ProxyAlias[alias[0]],
+			Proxy: br.ProxyAlias[v],
 		}
 		aliases = append(aliases, aliasStruct)
 	}

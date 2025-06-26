@@ -101,8 +101,9 @@ func (r *BasicRouter) Route(dst string, trace bool) (proxy.Proxy, []Trace, error
 
 		if tar, ok := ru.Match(dst); ok {
 			dstId = id
-			prx, ok = r.Proxies[tar]
-			if !ok {
+			if tar == "default" {
+				prx = r.DefaultProxy
+			} else if prx, ok = r.Proxies[tar]; !ok {
 				prx = r.Proxies[r.ProxyAlias[tar]]
 			}
 			r.Trace(fmt.Sprintf("matched successfully hit rule [%s]", ru), PREFERRED, &traces, trace)

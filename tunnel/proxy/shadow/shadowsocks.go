@@ -45,7 +45,7 @@ func (s *p) Connect(ctx context.Context, addr string, port uint16) (*proxy.Pd, e
 	if err != nil {
 		return nil, err
 	}
-	agency = cipher.StreamConn(agency).(*net.TCPConn)
+	agency = cipher.StreamConn(agency)
 
 	var atyp byte
 	var addrBytes []byte

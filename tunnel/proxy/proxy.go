@@ -229,7 +229,7 @@ func (p *Pd) CloseWriter() error {
 	case *tls.Conn:
 		return c.CloseWrite()
 	default:
-		return p.Close()
+		return nil
 	}
 }
 

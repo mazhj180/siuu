@@ -1,0 +1,53 @@
+
+# Log configuration
+[log]
+
+# - path: log file path, using '~' means the home directory of user
+# - level.system: log level of system, including error, warn, info, debug
+# - level.proxy: log level of proxy, including  error, warn, info, debug
+path = '~/.siuu/log/'
+level.system = 'DEBUG'
+level.proxy = 'INFO'
+
+
+
+# Server configuration
+[server]
+
+# - port: the main port on which the server listens for control command connections
+# - http.port: the port dedicated for HTTP proxy connections
+# - socks.port: the port dedicated for SOCKS5 proxy connections
+port = 17777
+http.port = 18888
+socks.port = 19999
+
+
+# - model: proxy model, including NORMAL, TUN. The default value is NORMAL
+proxy.model = "NORMAL"
+
+
+# listens for pprof ,the port is 6060
+[server.pprof]
+enable = false
+
+
+
+# If you want match the rules, you need to configure the router and proxy
+# the router section is [rule.router] and all the other configuration what about the router,
+# must be in the router section, for example, [path.table] and [path.xdb]
+# the proxy section is [rule.proxy]
+[rule]
+enable = true
+
+[rule.route]
+path = [
+    '~/.siuu/conf/proxies.toml',
+]
+
+xdb = '~/.siuu/conf/ip2region.xdb'
+
+# Proxy related configuration
+[rule.proxy]
+path = [
+    '~/.siuu/conf/proxies.toml'
+]

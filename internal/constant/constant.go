@@ -8,6 +8,6 @@ var (
 	//go:embed conf.toml
 	Config []byte
 
-	//go:embed proxies.toml
-	Proxies []byte // TODO: remove this
+	//go:embed route_table.toml
+	RouteTable []byte
 )

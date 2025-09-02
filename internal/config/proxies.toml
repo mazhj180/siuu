@@ -1,37 +1,47 @@
-# proxy config
-[proxy]
 # You can add your proxies here
-# Support proxy protocol: http/https, socks5, shadowsocks, trojan
-
-# Example:
-# Http/Https: [http/https],[name/alias],[server],[port],traff=[tcp/udp/both],mux=[no/smux]
-# Socks5: [socks5],[name/alias],[server],[port],[username],[password],traff=[tcp/udp/both],mux=[no/mux]
-# Shadowsocks: [shadow],[name/alias],[server],[port],[cipher],[password],traff=[tcp/udp/both],mux=[no/mux]
-# Trojan: [trojan],[name/alias],[server],[port],[password],[sni],traff=[tcp/udp/both],mux=[no/mux]
+# Supported schemes: http, socks, shadow (Shadowsocks), trojan
+#
+# Format: <scheme>://<host>:<port>?name=<proxyName>&[params]
+# Common params:
+# - name: required, unique proxy name
+# - t: optional traffic type, one of tcp/udp (default: tcp)
+# - mux: optional multiplexer, one of none/smux/yamux (default: none)
+#
+# Scheme-specific params:
+# - http: no extra params required beyond name
+# - socks: username, password are required
+# - shadow: cipher, password are required (e.g. AEAD_AES_128_GCM)
+# - trojan: password, sni are required
+#
+# Examples:
+# - http://proxy.example.com:8080?name=h1&t=tcp&mux=none
+# - socks://socks.example.com:1080?name=s5&username=user&password=pass&t=tcp
+# - shadow://ss.example.com:8388?name=ss1&cipher=AEAD_AES_128_GCM&password=secret&t=tcp&mux=smux
+# - trojan://trojan.example.com:443?name=p1&password=123456&sni=sni.siuu.com&t=tcp&mux=none
 proxies = [
-    # "trojan,example1,siuu.com,8080,xxxxxxx,siuu.com,traff=tcp,mux=smux",
+    # 'trojan://siuu.com:443?name=p1&password=123456&sni=sni.siuu.com&t=tcp&mux=none',
 ]
 
 
-alias = [
-    # "name:[ALADASD, adasdaw, sadasd, asdawdq, asdawd]",
+# Mapping tags to proxies
+# Format: '<proxyName:[tag1,tag2]>'
+# You can reference these tags as the rule target value, they will resolve to the mapped proxy.
+mappings = [
+    # 'p1:[openai,google]',
 ]
 
 
-# route table config
-[route]
-
-# First priority is excat match
-# Second priority is wildcard match
-# Third priority is geo match
-# If there is no matching rule, it will not use any proxies
-
-# If you want to use the default proxy,you can set the proxy name to default.
-# You can set the default proxy as you like
-# eg : [type],[xxxxx],default
+# Routing rules
+# - Rule format: '<type>,<key>,<value>'
+#   - type: domain | ip | special
+#   - key: for domain/ip, supports exact host like 'github.com' or wildcard like '*.google.com'
+#   - value: proxy name or tag from mappings; use 'direct' to bypass proxy
+# - Priority: exact match > wildcard match > default outlet (if configured); otherwise direct
+# - Note: default outlet cannot be set in this file; it can be set at runtime via API
 
 rules = [
-    # "exact,example1,example2",
-    # "wildcard,example1,example2",
-    # "geo,example1,example2",
+    # 'domain,*.google.com,p1'
+    # 'domain,www.cn.bing.com,direct',
+    # 'ip,192.168.4.73,p1',
+    # 'domain,github.com,openai'
 ]

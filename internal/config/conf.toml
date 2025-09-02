@@ -15,39 +15,40 @@ level.proxy = 'INFO'
 [server]
 
 # - port: the main port on which the server listens for control command connections
-# - http.port: the port dedicated for HTTP proxy connections
-# - socks.port: the port dedicated for SOCKS5 proxy connections
 port = 17777
-http.port = 18888
-socks.port = 19999
 
-
-# - model: proxy model, including NORMAL, TUN. The default value is NORMAL
-proxy.model = "NORMAL"
 
 
 # listens for pprof ,the port is 6060
 [server.pprof]
 enable = false
+port = 6060
 
 
+# proxy configuration
+[server.proxy]
 
-# If you want match the rules, you need to configure the router and proxy
-# the router section is [rule.router] and all the other configuration what about the router,
-# must be in the router section, for example, [path.table] and [path.xdb]
-# the proxy section is [rule.proxy]
-[rule]
+# - model: proxy model, including system, tun. The default value is system
+# - tables: routing tables configuration file path
+mode = "system"
+tables = [
+    "/Users/mazhj/Documents/workspaces/projects/siuu/conf/proxies.toml",
+]
+
+
+# os http proxy service configuration
+# if the tun mode is enabled, the following configuration regarding the os proxy will be ignored.
+[server.proxy.http]
+
+# - http.enable: if open the http proxy
+# - http.port: the port dedicated for HTTP proxy connections
 enable = true
+port = 18888
 
-[rule.route]
-path = [
-    '~/.siuu/conf/proxies.toml',
-]
+# os socks proxy service configuration
+[server.proxy.socks]
 
-xdb = '~/.siuu/conf/ip2region.xdb'
-
-# Proxy related configuration
-[rule.proxy]
-path = [
-    '~/.siuu/conf/proxies.toml'
-]
+# - socks.enable: if open the socks proxy
+# - socks.port: the port dedicated for SOCKS5 proxy connections
+enable = true
+port = 19999

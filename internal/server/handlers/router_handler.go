@@ -17,27 +17,44 @@ import (
 func GetRouterHandlers(router route.Router, log *logger.Logger) map[string]http.HandlerFunc {
 	return map[string]http.HandlerFunc{
 		"/api/router/clients": func(w http.ResponseWriter, r *http.Request) {
-			clients, mappings, defaultOutlet := router.GetOriginalInfo()
+			clients, mappings, rules, defaultOutlet := router.GetOriginalInfo()
 
-			clientsInfo := make([]api.Data, 0, len(clients))
+			clientsInfo := make([]api.ClientInfo, 0, len(clients))
 			for _, client := range clients {
-				clientsInfo = append(clientsInfo, api.Data{
-					"name":         client.Name(),
-					"type":         client.Type(),
-					"server":       client.ServerHost(),
-					"port":         client.ServerPort(),
-					"traffic_type": client.SupportTrafficType(),
+				clientsInfo = append(clientsInfo, api.ClientInfo{
+					Name:        client.Name(),
+					Type:        client.Type(),
+					Server:      client.ServerHost(),
+					Port:        client.ServerPort(),
+					TrafficType: client.SupportTrafficType(),
 				})
 			}
 
+			rulesInfo := make([]api.RuleInfo, 0, len(rules))
+			for _, rule := range rules {
+				rulesInfo = append(rulesInfo, api.RuleInfo{
+					Typ:   rule.Type(),
+					Key:   rule.Key(),
+					Value: rule.Value(),
+				})
+			}
+
+			var dp string
+			if defaultOutlet == nil {
+				dp = "none"
+			} else {
+				dp = defaultOutlet.Name()
+			}
+
 			w.Header().Set("Content-Type", "application/json")
-			if err := json.NewEncoder(w).Encode(api.Response{
+			if err := json.NewEncoder(w).Encode(api.Response[api.RouterInfo]{
 				Code:    0,
 				Message: "success",
-				Data: api.Data{
-					"clients":        clientsInfo,
-					"mappings":       mappings,
-					"default_outlet": defaultOutlet,
+				Data: api.RouterInfo{
+					Clients:       clientsInfo,
+					Mappings:      mappings,
+					Rules:         rulesInfo,
+					DefaultOutlet: dp,
 				},
 			}); err != nil {
 				log.Error("JSON encode error: %v", err)
@@ -60,7 +77,7 @@ func GetRouterHandlers(router route.Router, log *logger.Logger) map[string]http.
 			}
 
 			w.Header().Set("Content-Type", "application/json")
-			if err := json.NewEncoder(w).Encode(api.Response{
+			if err := json.NewEncoder(w).Encode(api.Response[api.Data]{
 				Code:    0,
 				Message: "success",
 				Data:    api.Data{},
@@ -84,7 +101,7 @@ func GetRouterHandlers(router route.Router, log *logger.Logger) map[string]http.
 			}
 
 			w.Header().Set("Content-Type", "application/json")
-			if err := json.NewEncoder(w).Encode(api.Response{
+			if err := json.NewEncoder(w).Encode(api.Response[api.Data]{
 				Code:    0,
 				Message: "success",
 				Data:    api.Data{},
@@ -108,7 +125,7 @@ func GetRouterHandlers(router route.Router, log *logger.Logger) map[string]http.
 			}
 
 			var tested []client.ProxyClient
-			clients, _, _ := router.GetOriginalInfo()
+			clients, _, _, _ := router.GetOriginalInfo()
 
 			if len(params.Proxies) == 0 {
 				tested = clients[:min(len(clients), 10)]
@@ -143,7 +160,7 @@ func GetRouterHandlers(router route.Router, log *logger.Logger) map[string]http.
 					ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 					defer cancel()
 
-					conn, err := client.Connect(ctx, req.Host, 443)
+					conn, err := client.Connect(ctx, "tcp", req.Host, 443)
 					if err != nil {
 						results <- result{Name: client.Name(), Delay: 0}
 						return
@@ -161,7 +178,7 @@ func GetRouterHandlers(router route.Router, log *logger.Logger) map[string]http.
 				close(results)
 			}()
 
-			resps := make([]api.Data, 0, len(tested))
+			resps := make([]api.PingResult, 0, len(tested))
 			for res := range results {
 				var delay string
 				if res.Delay == 0 {
@@ -170,19 +187,17 @@ func GetRouterHandlers(router route.Router, log *logger.Logger) map[string]http.
 					delay = fmt.Sprintf("%dms", res.Delay.Milliseconds())
 				}
 
-				resps = append(resps, api.Data{
-					"name":  res.Name,
-					"delay": delay,
+				resps = append(resps, api.PingResult{
+					Name:  res.Name,
+					Delay: delay,
 				})
 			}
 
 			w.Header().Set("Content-Type", "application/json")
-			if err := json.NewEncoder(w).Encode(api.Response{
+			if err := json.NewEncoder(w).Encode(api.Response[[]api.PingResult]{
 				Code:    0,
 				Message: "success",
-				Data: api.Data{
-					"results": resps,
-				},
+				Data:    resps,
 			}); err != nil {
 				log.Error("JSON encode error: %v", err)
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)

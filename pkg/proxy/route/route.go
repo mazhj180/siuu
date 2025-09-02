@@ -20,7 +20,7 @@ type Router interface {
 
 	SetMapping(string, string) error // set a mapping to the route table
 
-	GetOriginalInfo() ([]client.ProxyClient, map[string]string, client.ProxyClient) // get the original info of the router
+	GetOriginalInfo() ([]client.ProxyClient, map[string]string, []RouteRule, client.ProxyClient) // get the original info of the router
 }
 
 // r is the builtin router
@@ -30,6 +30,8 @@ type r struct {
 	clients       map[string]client.ProxyClient
 	mappings      map[string]string // mapping of proxy alias to proxy name
 	routeTable    *node
+
+	originalRules []RouteRule // original rules
 }
 
 // NewRouter creates a new builtin router
@@ -100,6 +102,8 @@ func (r *r) Initialize(rules []RouteRule, proxies []client.ProxyClient, mappings
 	for _, prx := range proxies {
 		r.clients[prx.Name()] = prx
 	}
+
+	r.originalRules = rules
 
 	for _, rule := range rules {
 		var prx client.ProxyClient
@@ -209,7 +213,7 @@ func (r *r) SetMapping(name string, proxyName string) error {
 	return nil
 }
 
-func (r *r) GetOriginalInfo() ([]client.ProxyClient, map[string]string, client.ProxyClient) {
+func (r *r) GetOriginalInfo() ([]client.ProxyClient, map[string]string, []RouteRule, client.ProxyClient) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -223,7 +227,10 @@ func (r *r) GetOriginalInfo() ([]client.ProxyClient, map[string]string, client.P
 		mappings[k] = v
 	}
 
-	return clients, mappings, r.defaultOutlet
+	copyRules := make([]RouteRule, len(r.originalRules))
+	copy(copyRules, r.originalRules)
+
+	return clients, mappings, copyRules, r.defaultOutlet
 }
 
 type RouteRule struct {
@@ -238,6 +245,18 @@ func NewRouteRule(typ, key, value string) RouteRule {
 		key:   key,
 		value: value,
 	}
+}
+
+func (rr *RouteRule) Type() string {
+	return rr.typ
+}
+
+func (rr *RouteRule) Key() string {
+	return rr.key
+}
+
+func (rr *RouteRule) Value() string {
+	return rr.value
 }
 
 type nodeType uint8

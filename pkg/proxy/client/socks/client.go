@@ -38,7 +38,18 @@ func (s *socks) Type() string {
 	return "socks"
 }
 
-func (s *socks) Connect(ctx context.Context, addr string, port uint16) (net.Conn, error) {
+func (s *socks) Connect(ctx context.Context, proto, addr string, port uint16) (net.Conn, error) {
+	switch proto {
+	case "tcp":
+		return s.connectTcp(ctx, addr, port)
+	case "udp":
+		return s.connectUdp(ctx, addr, port)
+	default:
+		return nil, client.ErrProxyResp
+	}
+}
+
+func (s *socks) connectTcp(ctx context.Context, addr string, port uint16) (net.Conn, error) {
 	dialer := &net.Dialer{
 		Timeout: 30 * time.Second,
 	}
@@ -164,6 +175,10 @@ func (s *socks) Connect(ctx context.Context, addr string, port uint16) (net.Conn
 	}
 
 	return agency, nil
+}
+
+func (s *socks) connectUdp(ctx context.Context, addr string, port uint16) (net.Conn, error) {
+	return nil, client.ErrProxyResp
 }
 
 func (s *socks) Name() string {

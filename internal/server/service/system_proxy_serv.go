@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// system proxy server callbacks
 func GetCallbacks(router route.Router, log *logger.Logger) *server.Callback {
 
 	return &server.Callback{
@@ -46,7 +47,7 @@ func GetCallbacks(router route.Router, log *logger.Logger) *server.Callback {
 			prxCtx, cancel := context.WithTimeout(ctx.Context, 30*time.Second)
 			defer cancel()
 
-			agency, err := proxy.Connect(prxCtx, dstHost, dstPort)
+			agency, err := proxy.Connect(prxCtx, "tcp", dstHost, dstPort)
 			if err != nil {
 				log.Error("<%s> [proxy] [%s] connect failed", ctx.SessionId(), dstHost)
 				return nil

@@ -56,7 +56,18 @@ func New(base client.BaseClient, name, password, sni string) client.ProxyClient 
 	}
 }
 
-func (t *trojan) Connect(ctx context.Context, host string, port uint16) (net.Conn, error) {
+func (t *trojan) Connect(ctx context.Context, proto, host string, port uint16) (net.Conn, error) {
+	switch proto {
+	case "tcp":
+		return t.connectTcp(ctx, host, port)
+	case "udp":
+		return t.connectUdp(ctx, host, port)
+	default:
+		return nil, client.ErrProxyResp
+	}
+}
+
+func (t *trojan) connectTcp(ctx context.Context, host string, port uint16) (net.Conn, error) {
 	var agency net.Conn
 	var err error
 
@@ -115,6 +126,10 @@ func (t *trojan) Connect(ctx context.Context, host string, port uint16) (net.Con
 	}
 
 	return agency, nil
+}
+
+func (t *trojan) connectUdp(ctx context.Context, host string, port uint16) (net.Conn, error) {
+	return nil, client.ErrProxyResp
 }
 
 func (t *trojan) Name() string {

@@ -14,6 +14,7 @@ import (
 	"siuu/pkg/proxy/server"
 	proxy_http "siuu/pkg/proxy/server/http"
 	proxy_socks "siuu/pkg/proxy/server/socks"
+	httputil "siuu/pkg/util/net/http"
 	"siuu/pkg/util/path"
 	"siuu/pkg/util/toml"
 	"time"
@@ -75,8 +76,13 @@ func New(conf *config.SystemConfig) (*Siuu, error) {
 	wrapperHandler := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
-			next.ServeHTTP(w, r)
-			slog.Debug("[system-ctl] http request method=%s path=%s duration=%s", r.Method, r.URL.Path, time.Since(start))
+
+			// Create a custom ResponseWriter to capture status code
+			ww := &httputil.StatusWriter{ResponseWriter: w, StatusCode: 200}
+			next.ServeHTTP(ww, r)
+
+			slog.Debug("[system-ctl] http request method=%s path=%s status=%d duration=%s",
+				r.Method, r.URL.Path, ww.StatusCode, time.Since(start))
 		})
 	}
 	siuu.ctlServer = &http.Server{
@@ -86,6 +92,11 @@ func New(conf *config.SystemConfig) (*Siuu, error) {
 
 	rh := handlers.GetRouterHandlers(siuu.router, slog)
 	for path, handler := range rh {
+		mux.HandleFunc(path, handler)
+	}
+
+	sh := handlers.GetSystemHandlers(conf, slog)
+	for path, handler := range sh {
 		mux.HandleFunc(path, handler)
 	}
 

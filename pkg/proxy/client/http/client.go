@@ -25,7 +25,18 @@ func New(base client.BaseClient, name string) client.ProxyClient {
 	}
 }
 
-func (h *http) Connect(ctx context.Context, host string, port uint16) (net.Conn, error) {
+func (h *http) Connect(ctx context.Context, proto, host string, port uint16) (net.Conn, error) {
+	switch proto {
+	case "tcp":
+		return h.connectTcp(ctx, host, port)
+	case "udp":
+		return h.connectUdp(ctx, host, port)
+	default:
+		return nil, client.ErrProxyResp
+	}
+}
+
+func (h *http) connectTcp(ctx context.Context, host string, port uint16) (net.Conn, error) {
 	dialer := &net.Dialer{
 		Timeout: 30 * time.Second,
 	}
@@ -51,6 +62,10 @@ func (h *http) Connect(ctx context.Context, host string, port uint16) (net.Conn,
 	}
 
 	return agency, nil
+}
+
+func (h *http) connectUdp(ctx context.Context, host string, port uint16) (net.Conn, error) {
+	return nil, client.ErrProtoNotSupported
 }
 
 func (h *http) Name() string {

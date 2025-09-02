@@ -9,6 +9,7 @@ import (
 )
 
 var ErrProxyResp = errors.New("proxy response error")
+var ErrProtoNotSupported = errors.New("transport protocol not supported")
 
 // ProxyClient is the interface for proxy clients.
 // It is used to connect to the proxy server and get the connection.
@@ -20,7 +21,7 @@ type ProxyClient interface {
 
 	// Connect connects to the proxy with the given host and port.
 	// It returns the connection if success, otherwise returns an error.
-	Connect(ctx context.Context, host string, port uint16) (net.Conn, error)
+	Connect(ctx context.Context, proto, host string, port uint16) (net.Conn, error)
 
 	ServerHost() string         // server host
 	ServerPort() uint16         // server port

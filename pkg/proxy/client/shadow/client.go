@@ -35,7 +35,18 @@ func (s *p) Type() string {
 	return "shadow"
 }
 
-func (s *p) Connect(ctx context.Context, addr string, port uint16) (net.Conn, error) {
+func (s *p) Connect(ctx context.Context, proto, addr string, port uint16) (net.Conn, error) {
+	switch proto {
+	case "tcp":
+		return s.connectTcp(ctx, addr, port)
+	case "udp":
+		return s.connectUdp(ctx, addr, port)
+	default:
+		return nil, client.ErrProxyResp
+	}
+}
+
+func (s *p) connectTcp(ctx context.Context, addr string, port uint16) (net.Conn, error) {
 	dialer := &net.Dialer{
 		Timeout: 30 * time.Second,
 	}
@@ -82,6 +93,10 @@ func (s *p) Connect(ctx context.Context, addr string, port uint16) (net.Conn, er
 		return nil, err
 	}
 	return agency, nil
+}
+
+func (s *p) connectUdp(ctx context.Context, host string, port uint16) (net.Conn, error) {
+	return nil, client.ErrProxyResp
 }
 
 func (s *p) Name() string {

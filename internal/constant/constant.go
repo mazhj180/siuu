@@ -1,4 +1,4 @@
-package config
+package constant
 
 import (
 	_ "embed"

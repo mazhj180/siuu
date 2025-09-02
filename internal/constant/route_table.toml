@@ -43,5 +43,5 @@ rules = [
     # 'domain,*.google.com,p1'
     # 'domain,www.cn.bing.com,direct',
     # 'ip,192.168.4.73,p1',
-    # 'domain,github.com,openai'
+    # 'domain,github.com,openai',
 ]

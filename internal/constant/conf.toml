@@ -32,7 +32,7 @@ port = 6060
 # - tables: routing tables configuration file path
 mode = "system"
 tables = [
-    "/Users/mazhj/Documents/workspaces/projects/siuu/conf/proxies.toml",
+    "~/.siuu/conf/route_table.toml",
 ]
 
 

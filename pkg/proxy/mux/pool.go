@@ -108,7 +108,7 @@ func (p *Pool) tryGetStreamFromHealthySessions() (Stream, error) {
 		return nil, errors.New("no sessions available")
 	}
 
-	// 只考虑健康的session，按负载排序
+	// only consider healthy sessions, sort by load
 	var healthySessions []*poolSession
 
 	for _, ps := range sessions {
@@ -174,7 +174,7 @@ func (p *Pool) tryCreateNewSessionIfNeeded(ctx context.Context) (Stream, error) 
 
 	stream, err := ps.OpenStream()
 	if err != nil {
-		// 创建失败，移除这个session
+		// create failed, remove this session
 		p.sessions = p.sessions[:len(p.sessions)-1]
 		ps.setState(Dead)
 		if ps.Session != nil {

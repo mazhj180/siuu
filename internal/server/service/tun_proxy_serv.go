@@ -24,7 +24,7 @@ func TunTrafficHandler(nic vnic.VNIC, interceptor *dns.TUNDNSInterceptor, tcpMan
 
 		if interceptor.IsRunning() {
 			if processedPacket, err := interceptor.ProcessPacket(ipPacket); err != dns.ErrNotDNSPacket {
-				// 仅当确认为 DNS 且已构造响应时回写
+				// only write back when it is dns and has response
 				if err == nil && processedPacket != nil && len(processedPacket.Raw) > 0 {
 					nic.Write(processedPacket.Raw)
 					continue

@@ -58,17 +58,17 @@ func LevelString(level string) LogLevel {
 func (l LogLevel) Color() string {
 	switch l {
 	case DEBUG:
-		return "\033[36m" // 青色
+		return "\033[36m" // cyan
 	case INFO:
-		return "\033[32m" // 绿色
+		return "\033[32m" // green
 	case WARN:
-		return "\033[33m" // 黄色
+		return "\033[33m" // yellow
 	case ERROR:
-		return "\033[31m" // 红色
+		return "\033[31m" // red
 	case FATAL:
-		return "\033[35m" // 紫色
+		return "\033[35m" // purple
 	default:
-		return "\033[0m" // 默认
+		return "\033[0m" // default
 	}
 }
 

@@ -175,6 +175,11 @@ func (r *r) SetDefaultOutletIfExists(name string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	if name == "direct" || name == "none" {
+		r.defaultOutlet = nil
+		return nil
+	}
+
 	if _, exists := r.clients[name]; !exists {
 		return errors.New("proxy not found")
 	}

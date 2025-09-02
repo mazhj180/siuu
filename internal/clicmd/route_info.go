@@ -1,6 +1,7 @@
 package clicmd
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -18,14 +19,17 @@ var (
 	isDefaultOutlet bool
 
 	routeCmd = &cobra.Command{
-		Use:   "route [--mappings/-m] [--proxies/-p] [--rules/-r] [--default/-d] [proxy_name]",
+		Use:   "route [--mappings/-m] [--proxies/-p] [--rules/-r] [--default/-d] [mapping_key] [proxy_name]",
 		Short: "Display and manage routing information including proxies, mappings, and rules",
 		Long: `Route displays routing information and manages proxy configurations.
 
 By default, route displays all routing information including default outlet,
 proxies, mappings, and rules. You can use flags to display specific sections.
 
-If a proxy_name is provided without other flags, it sets that proxy as the
+If a mapping_key is provided without other flags except --default/-d, it sets that mapping to the
+given proxy_name.
+
+If a proxy_name is provided without other flags except --mappings/-m, it sets that proxy as the
 default outlet.
 
 The -m, --mappings flag displays proxy mappings showing the relationship
@@ -63,7 +67,7 @@ The -d, --default flag displays the current default outlet proxy.`,
 				return
 			}
 			if isDefaultOutlet || all {
-				if len(arg) > 0 && !isMappings && !isProxies {
+				if isDefaultOutlet && len(arg) > 0 && !isMappings && !isProxies && !isRules {
 					resp, err := http.Get(url + "/api/router/set/default_outlet?proxy_name=" + arg[0])
 					if err != nil {
 						fmt.Fprintf(os.Stdout, "%s\n", err)
@@ -96,9 +100,39 @@ The -d, --default flag displays the current default outlet proxy.`,
 			}
 
 			if isMappings || all {
-				fmt.Fprintf(os.Stdout, "Proxy Mappings <key - proxy name> : \n")
-				for mapping, proxyName := range res.Data.Mappings {
-					fmt.Fprintf(os.Stdout, "\t%s - %s\n", mapping, proxyName)
+				if isMappings && len(arg) == 2 && !isProxies && !isDefaultOutlet && !isRules {
+					body, err := json.Marshal(api.ProxyParams{
+						MappingName: arg[0],
+						ProxyName:   arg[1],
+					})
+					if err != nil {
+						fmt.Fprintf(os.Stdout, "%s\n", err)
+						return
+					}
+					resp, err := http.Post(url+"/api/router/set/mappings", "application/json", bytes.NewReader(body))
+					if err != nil {
+						fmt.Fprintf(os.Stdout, "%s\n", err)
+						return
+					}
+					defer resp.Body.Close()
+
+					body, err = io.ReadAll(resp.Body)
+					var res api.Response[api.Data]
+					if err = json.Unmarshal(body, &res); err != nil {
+						return
+					}
+
+					if res.Code != 0 {
+						fmt.Fprintf(os.Stdout, "%s\n", res.Message)
+						return
+					}
+
+					fmt.Fprintf(os.Stdout, "Mapping : %s - %s\n", arg[0], arg[1])
+				} else {
+					fmt.Fprintf(os.Stdout, "Proxy Mappings <key - proxy name> : \n")
+					for mapping, proxyName := range res.Data.Mappings {
+						fmt.Fprintf(os.Stdout, "\t%s - %s\n", mapping, proxyName)
+					}
 				}
 			}
 

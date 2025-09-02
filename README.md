@@ -3,60 +3,56 @@
 </p>
 
 
-**there are no any proxy serve, "siuu" is just a local proxy app**
+**Siuu is a local proxy app. It does not provide any remote proxy services.**
 
-**notice** :`siuucli is deprecated, please use` [siuu-alfredworkflow](https://github.com/mazhj180/siuu-alfredworkflow.git)  `instead`
+**Notice**: `siuucli` is deprecated. Please use [siuu-alfredworkflow](https://github.com/mazhj180/siuu-alfredworkflow.git) instead.
 
 ## About
-- it implemented http/https, socks5, shadowsocks and trojan proxies now. 
-- you can implement any proxy protocols and routers you want.
-- it can run as a user-level daemon, and you can use it by cli tool; the cli tool is doing now.
-- siuu currently meets my basic needs, and subsequent improvements will be made gradually.
-- You can use this program anywhere without any conditions, and if you are interested, you can contribute your code. 
+- implements local proxy clients: http, socks, shadow (Shadowsocks), trojan
+- extensible: you can add custom proxy protocols and routers
+- runs as a user-level daemon or a normal program
+- stable for daily use; improvements will continue
+- open source; contributions are welcome
 
 ## Install
-the best version of golang is 1.23.0 
-
+Recommended Go version: 1.23.0+
 
 ### Download from Release
+[Latest release](https://github.com/siuu/siuu/releases/latest)
 
-[Download](https://github.com/siuu/siuu/releases/latest)
+### Build from source
 
-### Build from the Source code
-
-**run it as a daemon service**
+Run as a daemon service
 ```bash
-
-git clone https://github.com/mazhj180/siuu.git # download the source code
-cd siuu # come to the source code directory
-go build -o siuu . # build the source code
-# you can move the app to anywhere before you run command "siuu install"
-./siuu install # register the daemon service to os; note: if you execute this command, don't move file directories around 
-./siuu start # start the daemon service; note: you kan use cli to start the daemon service
-```
-
-**run it as a normal program**
-```bash 
-
-git clone https://github.com/siuu/siuu.git
+git clone https://github.com/mazhj180/siuu.git
 cd siuu
 go build -o siuu .
-./siuu # run directly
+# You can move the app anywhere before running "./siuu install"
+./siuu install  # register the daemon service (do not move files afterward)
+./siuu start    # start the daemon service
+```
+
+Run as a normal program
+```bash
+git clone https://github.com/mazhj180/siuu.git
+cd siuu
+go build -o siuu .
+./siuu
 ```
 
 ## Usage
-the app will create a directory named ".siuu" in your home directory, when it is running at first time.
-there are some files or dir in the directory:
-- conf/: the init configuration file of siuu
-- log/: the log file of siuu
-- siuucli: the cli tool of siuu (Deprecated)
-- siuu: the app of siuu
+At first run, Siuu creates a directory named `.siuu` in your home directory containing:
+- conf/: configuration files
+- log/: log files
+- siuu: the app binary
+- siuucli: deprecated
 
-### How to config?
+### Configuration
 
-**init configuration file:**
+Core configuration (`conf/conf.toml`):
 ```toml
 # you don't need to edit the init configuration file 
+
 
 # Log configuration
 [log]
@@ -74,95 +70,116 @@ level.proxy = 'INFO'
 [server]
 
 # - port: the main port on which the server listens for control command connections
-# - http.port: the port dedicated for HTTP proxy connections
-# - socks.port: the port dedicated for SOCKS5 proxy connections
 port = 17777
-http.port = 18888
-socks.port = 19999
 
-
-# - model: proxy model, including NORMAL, TUN. The default value is NORMAL
-proxy.model = "NORMAL"
 
 
 # listens for pprof ,the port is 6060
 [server.pprof]
 enable = false
+port = 6060
 
 
+# proxy configuration
+[server.proxy]
 
-# If you want match the rules, you need to configure the router and proxy
-# the router section is [rule.router] and all the other configuration what about the router,
-# must be in the router section, for example, [path.table] and [path.xdb]
-# the proxy section is [rule.proxy]
-[rule]
+# - model: proxy model, including system, tun. The default value is system
+# - tables: routing tables configuration file path
+mode = "system"
+tables = [
+    "~/.siuu/conf/route_table.toml",
+]
+
+
+# os http proxy service configuration
+# if the tun mode is enabled, the following configuration regarding the os proxy will be ignored.
+[server.proxy.http]
+
+# - http.enable: if open the http proxy
+# - http.port: the port dedicated for HTTP proxy connections
 enable = true
+port = 18888
 
-[rule.route]
-path = [
-    '~/.siuu/conf/proxies.toml',
-]
+# os socks proxy service configuration
+[server.proxy.socks]
 
-xdb = '~/.siuu/conf/ip2region.xdb'
-
-# Proxy related configuration
-[rule.proxy]
-path = [
-    '~/.siuu/conf/proxies.toml'
-]
+# - socks.enable: if open the socks proxy
+# - socks.port: the port dedicated for SOCKS5 proxy connections
+enable = true
+port = 19999
 ```
 
-**proxies and routing table configuration file:**
+Proxies and routing table configuration (`~/.siuu/conf/route_table.toml`):
 ```toml
-# proxy config ('~/.siuu/conf/proxies.toml')
-[proxy]
 # You can add your proxies here
-# Support proxy protocol: http/https, socks5, shadowsocks, trojan
-
-# Example:
-# Http/Https: [http/https],[name],[server],[port],[tcp/udp]
-# Socks5: [socks5],[name],[server],[port],[username],[password],[tcp/udp]
-# Shadowsocks: [shadow],[name],[server],[port],[cipher],[password],[tcp/udp]
-# Trojan: [trojan],[name],[server],[port],[password],[sni],[tcp/udp]
+# Supported schemes: http, socks, shadow (Shadowsocks), trojan
+#
+# Format: <scheme>://<host>:<port>?name=<proxyName>&[params]
+# Common params:
+# - name: required, unique proxy name
+# - t: optional traffic type, one of tcp/udp (default: tcp)
+# - mux: optional multiplexer, one of none/smux/yamux (default: none)
+#
+# Scheme-specific params:
+# - http: no extra params required beyond name
+# - socks: username, password are required
+# - shadow: cipher, password are required (e.g. AEAD_AES_128_GCM)
+# - trojan: password, sni are required
+#
+# Examples:
+# - http://proxy.example.com:8080?name=h1&t=tcp&mux=none
+# - socks://socks.example.com:1080?name=s5&username=user&password=pass&t=tcp
+# - shadow://ss.example.com:8388?name=ss1&cipher=AEAD_AES_128_GCM&password=secret&t=tcp&mux=smux
+# - trojan://trojan.example.com:443?name=p1&password=123456&sni=sni.siuu.com&t=tcp&mux=none
 proxies = [
-    "trojan,xxxx,xxxxxxxx.com,8080,xxxxxxxxxxxxxxxx,xxxxxxxxx,tcp",
-]
-
-# proxy alias
-alias = [
-    "name:[ALADASD, adasdaw, sadasd, asdawdq, asdawd]",
+    # 'trojan://siuu.com:443?name=p1&password=123456&sni=sni.siuu.com&t=tcp&mux=none',
 ]
 
 
-# route table config
-[route]
+# Mapping tags to proxies
+# Format: '<proxyName:[tag1,tag2]>'
+# You can reference these tags as the rule target value, they will resolve to the mapped proxy.
+mappings = [
+    # 'p1:[openai,google]',
+]
 
-# First priority is excat match
-# Second priority is wildcard match
-# Third priority is geo match
-# If there is no matching rule, it will not use any proxies
 
-# If you want to use the default proxy,you can set the proxy name to default.
-# You can set the default proxy as you like
-# eg : [type],[xxxxx],default
+# Routing rules
+# - Rule format: '<type>,<key>,<value>'
+#   - type: domain | ip | special
+#   - key: for domain/ip, supports exact host like 'github.com' or wildcard like '*.google.com'
+#   - value: proxy name or tag from mappings; use 'direct' to bypass proxy
+# - Priority: exact match > wildcard match > default outlet (if configured); otherwise direct
+# - Note: default outlet cannot be set in this file; it can be set at runtime via API
 
-# Example: [type],[domain],[proxy name/alias]
 rules = [
-
-    # bing
-    "excat,www.cn.bing.com,direct",
-    "excat,cn.bing.com,direct",
-
-    # github
-    "excat,github.com,xxxxx",
-    "wildcard,*.github.com,xxxxx",
-
+    # 'domain,*.google.com,p1'
+    # 'domain,www.cn.bing.com,direct',
+    # 'ip,192.168.4.73,p1',
+    # 'domain,github.com,openai',
 ]
 ```
 
-### How to start it?
+### Start/Stop
 
 ```bash
-./siuucli proxy on/off # (Deprecated)    turn on/off the global proxy 
-./siuu start/stop      # start/stop the app
+./siuu start     # start the app (daemon mode after install)
+./siuu stop      # stop the app
 ```
+
+## REST API (Router Control)
+- GET `/api/router/clients`: list proxies, mappings, rules, default outlet
+- POST `/api/router/set/mappings`: set a mapping
+  - body: `{ "mapping_name": "<tag>", "proxy_name": "<proxy>" }`
+- GET `/api/router/set/default_outlet?proxy_name=<name>`: set default outlet
+
+## Logs
+Logs are written to the directory configured by `log.path` (default: `~/.siuu/log/`).
+
+## Troubleshooting
+- cannot connect: verify proxy URLs, required params, and network reachability
+- route not taking effect: check rule order and wildcard vs exact matches
+- default outlet not used: set via API; it cannot be set in route table file
+
+## License
+MIT

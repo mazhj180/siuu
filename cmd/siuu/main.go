@@ -13,7 +13,11 @@ import (
 	"github.com/kardianos/service"
 )
 
-var confPath = "/Users/mazhj/Documents/workspaces/projects/siuu/conf"
+var (
+	baseDir = path.GetHomeDir() + "/.siuu"
+
+	_ = os.MkdirAll(baseDir+"/conf", 0755)
+)
 
 // run as a daemon service usage : ./siuu install &&./siuu start
 // run as a normal program usage : ./siuu
@@ -28,14 +32,14 @@ func main() {
 		Option: map[string]interface{}{
 			"UserService":  true,
 			"Label":        "siuu",
-			"LogDirectory": path.GetHomeDir() + "/.siuu/log",
+			"LogDirectory": baseDir + "/log",
 			"RunAtLoad":    false, // disable auto start
 		},
 	}
 
 	// load system config from file
 	sysConf := &config.SystemConfig{}
-	err := toml.LoadTomlFromFile(confPath+"/conf.toml", sysConf)
+	err := toml.LoadTomlFromFile(baseDir+"/conf/conf.toml", sysConf)
 	if err != nil {
 		panic(err)
 	}

@@ -180,7 +180,7 @@ func (s *Siuu) initProxyLogger() (*logger.Logger, error) {
 	logconf := logger.DefaultConfig()
 	logconf.Level = logger.LevelString(s.conf.Log.Level.Proxy)
 	logconf.Async = true
-	logconf.LogDir = s.conf.Log.Path
+	logconf.LogDir = path.ExpandHomePath(s.conf.Log.Path)
 	logconf.BaseName = "proxy"
 	logconf.Splitter = splitter.NewSizeOverwriteSplitter(1024 * 1024 * 10)
 	return logger.New(logconf)
@@ -190,7 +190,7 @@ func (s *Siuu) initSystemLogger() (*logger.Logger, error) {
 	logconf := logger.DefaultConfig()
 	logconf.Level = logger.LevelString(s.conf.Log.Level.System)
 	logconf.Async = false
-	logconf.LogDir = s.conf.Log.Path
+	logconf.LogDir = path.ExpandHomePath(s.conf.Log.Path)
 	logconf.BaseName = "system"
 	logconf.Splitter = splitter.NewSizeOverwriteSplitter(1024 * 1024 * 10)
 	return logger.New(logconf)

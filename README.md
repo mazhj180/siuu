@@ -42,14 +42,12 @@ go build -o siuu .
 
 ## Usage
 At first run, Siuu creates a directory named `.siuu` in your home directory containing:
-- conf/: configuration files
-- log/: log files
-- siuu: the app binary
-- siuucli: deprecated
+- `conf/`: configuration files, **the core configuration file must be in here**
+- `log/`: this is the location where the daemon log is stored, and the size of this log is not controlled by the siuu program, so you need to manage it manually.
 
 ### Configuration
 
-Core configuration (`conf/conf.toml`):
+Core configuration (`~/.siuu/conf/conf.toml`):
 ```toml
 # you don't need to edit the init configuration file 
 

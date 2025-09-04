@@ -128,7 +128,7 @@ func GetRouterHandlers(router route.Router, log *logger.Logger) map[string]http.
 			clients, _, _, _ := router.GetOriginalInfo()
 
 			if len(params.Proxies) == 0 {
-				tested = clients[:min(len(clients), 10)]
+				tested = clients[:min(len(clients), 20)]
 			} else {
 				for _, client := range clients {
 					if slices.Contains(params.Proxies, client.Name()) {

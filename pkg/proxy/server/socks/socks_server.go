@@ -63,7 +63,7 @@ func (s *socks) Start() error {
 			continue
 		}
 
-		go s.process(server.NewContext(s.contextFunc(), conn, "socks"))
+		go s.process(server.NewContext(s.contextFunc(), conn, "tcp-socks"))
 	}
 }
 

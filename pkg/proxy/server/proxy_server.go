@@ -40,6 +40,7 @@ type Context struct {
 
 	Stage         string
 	SelectedRoute string
+	MatchedRule   string
 	TunnelStatus  *tunnel.Status
 }
 

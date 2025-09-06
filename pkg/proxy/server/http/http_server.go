@@ -66,7 +66,7 @@ func (h *http) Start() error {
 			continue
 		}
 
-		go h.process(server.NewContext(h.contextFunc(), conn, "http"))
+		go h.process(server.NewContext(h.contextFunc(), conn, "tcp-http"))
 	}
 
 }
@@ -147,6 +147,7 @@ func (h *http) process(ctx *server.Context) {
 	}
 	h.activeTunnels.LoadAndDelete(ctx.SessionId())
 
+	ctx.Stage = "finished"
 	if h.onFinished != nil {
 		h.onFinished(ctx)
 	}

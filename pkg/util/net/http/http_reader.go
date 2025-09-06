@@ -24,7 +24,6 @@ func NewHttpReader(req *http.Request) io.Reader {
 	for k, vals := range req.Header {
 		if strings.EqualFold(k, "Host") {
 			hasHost = true
-			break
 		}
 		for _, val := range vals {
 			_, _ = fmt.Fprintf(&buf, "%s: %s\r\n", k, val)

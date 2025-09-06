@@ -10,7 +10,7 @@ import (
 type Router interface {
 	Name() string // return the name of the router
 
-	Route(string) client.ProxyClient // route the request to the proxy
+	Route(string) (client.ProxyClient, string, bool) // route the request to the proxy
 
 	Initialize([]RouteRule, []client.ProxyClient, map[string]string, client.ProxyClient) error // initialize the route table and default outlet
 
@@ -31,7 +31,8 @@ type r struct {
 	mappings      map[string]string // mapping of proxy alias to proxy name
 	routeTable    *node
 
-	originalRules []RouteRule // original rules
+	originalRules   []RouteRule          // original rules
+	originalClients []client.ProxyClient // original clients
 }
 
 // NewRouter creates a new builtin router
@@ -39,7 +40,8 @@ func NewRouter() Router {
 	return &r{
 		clients: make(map[string]client.ProxyClient),
 		routeTable: &node{
-			children: make(map[string]*node),
+			children:         make(map[string]*node),
+			wildcardChildren: make(map[string]*node),
 		},
 	}
 }
@@ -48,31 +50,40 @@ func (r *r) Name() string {
 	return "builtin"
 }
 
-func (r *r) Route(host string) client.ProxyClient {
+func (r *r) Route(host string) (client.ProxyClient, string, bool) {
 
+	var isDefaultOutlet bool
 	if node, exists := r.routeTable.children[host]; exists && node.typ == special {
-		return r.clients[node.proxyName]
+		return r.clients[node.proxyName], node.segment, isDefaultOutlet
 	}
 
 	segments := strings.Split(host, ".")
 
-	prxName := r.route(r.routeTable, segments)
+	ruleSegments := make([]string, 0, len(segments))
+	prxName := r.route(r.routeTable, segments, &ruleSegments)
 
+	rule := strings.Join(ruleSegments, ".")
 	if prxName == "direct" {
-		return nil
+		return nil, rule, isDefaultOutlet
 	}
 
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	if prx, exists := r.clients[prxName]; exists {
-		return prx
+	if prx, exists := r.clients[prxName]; !exists {
+		if prx, exists = r.clients[r.mappings[prxName]]; exists {
+			return prx, rule, isDefaultOutlet
+		}
+	} else {
+		return prx, rule, isDefaultOutlet
 	}
 
-	return r.defaultOutlet
+	isDefaultOutlet = true
+
+	return r.defaultOutlet, "", isDefaultOutlet
 }
 
-func (r *r) route(n *node, segments []string) string {
+func (r *r) route(n *node, segments []string, ruleSegments *[]string) string {
 	var l int
 	if l = len(segments); l == 0 {
 		return n.proxyName
@@ -82,14 +93,20 @@ func (r *r) route(n *node, segments []string) string {
 	remaining := segments[:l-1]
 
 	if child, exists := n.children[segment]; exists {
-		return r.route(child, remaining)
+		result := r.route(child, remaining, ruleSegments)
+		*ruleSegments = append(*ruleSegments, child.segment)
+		return result
 	}
 
-	if n.wildcard != nil {
-		return n.wildcard.proxyName
+	for k, v := range n.wildcardChildren {
+		sl, kl := len(segment), len(k)
+		if (sl >= kl || sl+1 == kl) && strings.HasSuffix(segment, k[1:kl]) {
+			*ruleSegments = append(*ruleSegments, v.segment)
+			return v.proxyName
+		}
 	}
 
-	return "default"
+	return ""
 }
 
 func (r *r) Initialize(rules []RouteRule, proxies []client.ProxyClient, mappings map[string]string, defaultOutlet client.ProxyClient) error {
@@ -102,21 +119,22 @@ func (r *r) Initialize(rules []RouteRule, proxies []client.ProxyClient, mappings
 	for _, prx := range proxies {
 		r.clients[prx.Name()] = prx
 	}
+	r.originalClients = proxies
 
 	r.originalRules = rules
 
 	for _, rule := range rules {
-		var prx client.ProxyClient
+
 		var exists bool
-		if prx, exists = r.clients[rule.value]; !exists {
-			prx, exists = r.clients[mappings[rule.value]]
+		var prxName string
+		if _, exists = r.clients[rule.value]; !exists {
+			_, exists = r.clients[mappings[rule.value]]
 		}
 
-		var prxName string
-		if !exists {
-			prxName = "direct"
+		if !exists && rule.value != "direct" {
+			continue
 		} else {
-			prxName = prx.Name()
+			prxName = rule.value
 		}
 
 		segments := strings.Split(rule.key, ".")
@@ -128,7 +146,7 @@ func (r *r) Initialize(rules []RouteRule, proxies []client.ProxyClient, mappings
 			r.routeTable.children[rule.key] = &node{
 				segment:   rule.key,
 				typ:       special,
-				proxyName: prx.Name(),
+				proxyName: prxName,
 			}
 		}
 	}
@@ -148,23 +166,25 @@ func (r *r) addRuleNode(n *node, segments []string, name string) {
 	segment := segments[l-1]
 	remaining := segments[:l-1]
 
+	nn := &node{
+		segment: segment,
+	}
+
 	if strings.HasPrefix(segment, "*") {
-		if n.wildcard == nil {
-			n.wildcard = &node{
-				segment: segment,
-				typ:     wildcard,
-			}
+		nn.typ = wildcard
+		if n.wildcardChildren[segment] == nil {
+			n.wildcardChildren[segment] = nn
 		}
-		r.addRuleNode(n.wildcard, nil, name)
+		r.addRuleNode(n.wildcardChildren[segment], nil, name)
 		return
 	}
 
+	nn.typ = static
+	nn.children = make(map[string]*node)
+	nn.wildcardChildren = make(map[string]*node)
+
 	if n.children[segment] == nil {
-		n.children[segment] = &node{
-			segment:  segment,
-			typ:      static,
-			children: make(map[string]*node),
-		}
+		n.children[segment] = nn
 	}
 
 	r.addRuleNode(n.children[segment], remaining, name)
@@ -222,10 +242,8 @@ func (r *r) GetOriginalInfo() ([]client.ProxyClient, map[string]string, []RouteR
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	clients := make([]client.ProxyClient, 0, len(r.clients))
-	for _, proxy := range r.clients {
-		clients = append(clients, proxy)
-	}
+	clients := make([]client.ProxyClient, len(r.originalClients))
+	copy(clients, r.originalClients)
 
 	mappings := make(map[string]string, len(r.mappings))
 	for k, v := range r.mappings {
@@ -273,8 +291,8 @@ const (
 )
 
 type node struct {
-	children map[string]*node
-	wildcard *node
+	children         map[string]*node
+	wildcardChildren map[string]*node
 
 	typ nodeType
 
